@@ -27,4 +27,9 @@ https://gem5.atlassian.net/browse/GEM5-1278
 > These scripts are causing us a lot of headaches and have become difficult to maintain.
 > The gem5 stdlib should be able to meet the vast majority of se/fs.py use-cases come the next release.
 
-What is the "gem5 stdlib"?
+## 2023-04-02 -- gem5 stdlib
+
+https://www.gem5.org/documentation/gem5-stdlib/overview
+
+The gem5 standard library was introduced in 2021.
+It looks like it is intended to be an easy way to set up gem5 simulations in python.
