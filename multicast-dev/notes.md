@@ -33,3 +33,11 @@ https://www.gem5.org/documentation/gem5-stdlib/overview
 
 The gem5 standard library was introduced in 2021.
 It looks like it is intended to be an easy way to set up gem5 simulations in python.
+
+This is neat:
+
+> A core feature of the gem5 stdlib resource package is that
+> it allows users to automatically obtain prebuilt gem5 resources for their simulation.
+> A user may specify in their Python config file that a specific gem5 resource is required and,
+> when run, the package will check if there is a local copy on the host system,
+> and if not, download it.
