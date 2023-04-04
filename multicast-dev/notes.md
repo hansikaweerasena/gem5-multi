@@ -1,6 +1,8 @@
 
 # Multicast Development Notes
 
+Richard Bachmann
+
 ## 2023-04-02 -- se.py has been deprecated
 
 I switched to the `develop` branch (as recommended by the gem5 contribution docs),
@@ -41,3 +43,125 @@ This is neat:
 > A user may specify in their Python config file that a specific gem5 resource is required and,
 > when run, the package will check if there is a local copy on the host system,
 > and if not, download it.
+
+## 2023-04-04
+
+### Add option to enable multicast
+
+Before actually adding multicast support,
+we need a way for the user to choose between running a simulation with and without multicast support.
+This is important for testing.
+
+Doing so will probably require seeing how the gem5 stdlib does it.
+This looks useful:
+https://www.gem5.org/documentation/gem5-stdlib/develop-own-components-tutorial
+
+> The gem5 standard library code resides in src/python/gem5
+
+### Garnet and gem5 stdlib
+
+How does garnet work with gem5 stdlib?
+I haven't tried using garnet with the stdlib yet.
+
+I looked through `src/python/gem5` and I couldn't find any indication of garnet support.
+The developers probably haven't gotten to it yet.
+
+This isn't a big problem, because we can still use se.py to set up the simulations
+(it's just been moved to a 'deprecated' directory).
+I'll need to look at se.py to try and figure out how to add a way to toggle-on multicast.
+While I'm doing that, I may find it would be easy to add stdlib support for garnet myself,
+according to the tutorial.
+
+### Examining se.py
+
+se.py doesn't directly handle garnet options.
+
+Here are some relevant lines:
+```
+addToPath("../../")
+
+from ruby import Ruby
+
+from common import Options
+```
+and
+```
+parser = argparse.ArgumentParser()
+Options.addCommonOptions(parser)
+Options.addSEOptions(parser)
+
+if "--ruby" in sys.argv:
+    Ruby.define_options(parser)
+```
+
+### Examining configs/ruby/Ruby.py
+
+In `def create_system`, it looks like the garnet configuration is passed to
+configs/network/Network.py and configs/topologies/.
+
+We aren't making any topology modifications, so I'll just look at Network.py.
+
+### Examining configs/network/Network.py
+
+A lot of the NoC-specific options are defined here.
+
+`def create_network` and `init_network` look especially relevant.
+
+There is a 'NetworkClass' class defined in some other file.
+
+It carries some important info about the network and seems to be passed to
+`init_network` at some point.
+It might be a good place to add the multicast toggle.
+
+Wait, NetworkClass is not a class, it is a variable that is assigned either
+'GarnetNetwork' or 'SimpleNetwork'.
+
+From grep:
+```
+src/mem/ruby/network/garnet/GarnetNetwork.py:class GarnetNetwork(RubyNetwork):
+```
+
+### Examining src/mem/ruby/network/garnet/GarnetNetwork.py
+
+I'm out of the configs and into the src now.
+I need to figure out how to set a C++ boolean (for the multicast toggle) with python.
+
+It looks like this is being done with a `Param` object.
+I think Hansika mentioned this before.
+
+### Adding new params:
+
+How do I add new variable to Param? Solution:
+https://www.gem5.org/documentation/learning_gem5/part2/parameters/
+
+On the python side:
+```
+time_to_wait = Param.Latency("Time before firing the event")
+```
+
+On the c++ side:
+```
+HelloObject::HelloObject(const HelloObjectParams &params) :
+    SimObject(params),
+    event(*this),
+    myName(params.name),
+    latency(params.time_to_wait),
+    timesLeft(params.number_of_fires)
+{
+    DPRINTF(Hello, "Created the hello object with the name %s\n", myName);
+}
+```
+I've seen this kind of code in the garnet src before.
+
+### se.py or stdlib?
+
+In https://gem5.atlassian.net/browse/GEM5-1278
+(noted earlier) it says:
+
+> This is a stepping stone to remove fs.py and se.py and all (or most) of the option library from gem5
+
+The gem5 developers do not like the current strategy of command-line options being
+passed around to set the params.
+However, trying to rewrite all of this configuration stuff into gem5 stdlib looks
+time consuming and is a yet another detour from the detour we are currently on.
+I think it would be best to just add another option and continue using se.py.
