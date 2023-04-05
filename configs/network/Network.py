@@ -175,6 +175,7 @@ def init_network(options, network, InterfaceClass):
         network.ni_flit_size = options.link_width_bits / 8
         network.routing_algorithm = options.routing_algorithm
         network.garnet_deadlock_threshold = options.garnet_deadlock_threshold
+        network.enable_multicast = options.multicast
 
         # Create Bridges and connect them to the corresponding links
         for intLink in network.int_links:

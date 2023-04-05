@@ -190,6 +190,8 @@ Steps:
 - Read the param in the GarnetNetwork constructor.
 - Print a debug message indicating the option was or was not set.
 
+### Registering the flag
+
 I added a --multicast flag to my simulation command.
 The command failed when run (as it should).
 
@@ -207,3 +209,34 @@ it prints out this message:
 ```
   --multicast           Enable multicast routing. Default is multiple-unicast.
 ```
+
+### Registering the param
+
+In src/mem/ruby/network/garnet/GarnetNetwork.py, class GarnetNetwork, I added:
+```
+    enable_multicast = Param.Bool(False, "enable multicast routing")
+```
+And in configs/network/Network.py, def init_network, I added:
+```
+        network.enable_multicast = options.multicast
+```
+When I ran the simulation, I got this error:
+```
+AttributeError: Class GarnetNetwork has no parameter enable_multicast
+```
+Even though I was only editing python files, I think I need to recompile gem5.
+```
+scons ./build/X86/gem5.opt -j 6
+```
+Error:
+```
+scons: *** [build/X86/systemc/tlm_core/2/quantum/global_quantum.o]
+TypeError : File /home/rb/uf/research/gem5-multicast/src/systemc/ext/systemc found
+where directory expected.
+scons: building terminated because of errors.
+```
+Solution: delete build folder and recompile.
+https://stackoverflow.com/questions/60520776/error-when-building-gem5-typeerror-file-hdd-me-gem5-src-systemc-ext-systemc?rq=2
+
+After recompiling, the se-hello.sh script runs.
+There is still no change in output at this point.

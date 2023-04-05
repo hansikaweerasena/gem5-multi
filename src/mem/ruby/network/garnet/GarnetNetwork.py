@@ -51,6 +51,7 @@ class GarnetNetwork(RubyNetwork):
     garnet_deadlock_threshold = Param.UInt32(
         50000, "network-level deadlock threshold"
     )
+    enable_multicast = Param.Bool(False, "enable multicast routing")
 
 
 class GarnetNetworkInterface(ClockedObject):
