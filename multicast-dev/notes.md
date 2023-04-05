@@ -3,6 +3,8 @@
 
 Richard Bachmann
 
+
+
 ## 2023-04-02 -- se.py has been deprecated
 
 I switched to the `develop` branch (as recommended by the gem5 contribution docs),
@@ -43,6 +45,8 @@ This is neat:
 > A user may specify in their Python config file that a specific gem5 resource is required and,
 > when run, the package will check if there is a local copy on the host system,
 > and if not, download it.
+
+
 
 ## 2023-04-04
 
@@ -165,3 +169,41 @@ passed around to set the params.
 However, trying to rewrite all of this configuration stuff into gem5 stdlib looks
 time consuming and is a yet another detour from the detour we are currently on.
 I think it would be best to just add another option and continue using se.py.
+
+
+
+## 2023-04-05
+
+Where in the garnet src files should the multicast toggle param be added?
+
+In src/mem/ruby/network/garnet/GarnetNetwork.cc,
+the GarnetNetwork constructor accepts many params,
+including 'routing_algorithm' and 'ni_flit_size'.
+It seems reasonable to have it handle the multicast toggle.
+
+### Adding the multicast toggle param
+
+Steps:
+- Register the command line option.
+- Make sure the option is passed to the correct param-setting function.
+- Register a new param.
+- Read the param in the GarnetNetwork constructor.
+- Print a debug message indicating the option was or was not set.
+
+I added a --multicast flag to my simulation command.
+The command failed when run (as it should).
+
+I added the following to configs/network/Network.py:
+```
+    parser.add_argument(
+        "--multicast",
+        action="store_true",
+        default=False,
+        help="Enable multicast routing. Default is multiple-unicast.",
+    )
+```
+The simulation no longer fails and, when you append --help to the command,
+it prints out this message:
+```
+  --multicast           Enable multicast routing. Default is multiple-unicast.
+```

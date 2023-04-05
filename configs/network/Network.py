@@ -118,6 +118,12 @@ def define_options(parser):
         help="""SimpleNetwork links uses a separate physical
             channel for each virtual network""",
     )
+    parser.add_argument(
+        "--multicast",
+        action="store_true",
+        default=False,
+        help="Enable multicast routing. Default is multiple-unicast.",
+    )
 
 
 def create_network(options, ruby):
