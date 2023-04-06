@@ -307,3 +307,9 @@ Removing the `--multicast` flag produces:
 ```
 
 The multicast toggle is now installed.
+
+### Next steps
+
+Hansika and I already decided on a flit encoding strategy (destination bitvector).
+I need to figure out how many flits each packet will consist of.
+I also need to figure out which routing algorithm to implement.
