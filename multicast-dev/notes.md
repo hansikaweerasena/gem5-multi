@@ -240,3 +240,70 @@ https://stackoverflow.com/questions/60520776/error-when-building-gem5-typeerror-
 
 After recompiling, the se-hello.sh script runs.
 There is still no change in output at this point.
+
+
+
+## 2023-04-06
+
+### Connecting the --multicast flag to GarnetNetwork.cc
+
+The python changes are done.
+Now I need to add the param to the GarnetNetwork constructor in GarnetNetwork.cc.
+I also need to add a variable in GarnetNetwork.hh.
+
+In src/mem/ruby/network/garnet/GarnetNetwork.hh, in the 'protected' category, I add:
+```
+    bool m_enable_multicast;
+```
+All of the member variables in the class are prefixed with 'm_'.
+I'll follow the convention.
+
+In src/mem/ruby/network/garnet/GarnetNetwork.cc, in the constructor, I add:
+```
+    m_enable_multicast = p.enable_multicast;
+```
+
+To test this, I'll add a debug print statement.
+gem5 had a macro for this called DPRINTF:
+https://www.gem5.org/documentation/learning_gem5/part2/debugging/
+
+Out of all of the available debug flags,
+'RubyNetwork' is probably the most appropriate.
+It might be worth adding a 'multicast' debug flag later though.
+
+Here's what I added:
+```
+    if (m_enable_multicast)
+        DPRINTF(RubyNetwork, "Multicast enabled.\n");
+    else
+        DPRINTF(RubyNetwork, "Multicast not enabled."
+            " Using multiple-unicast instead.\n");
+```
+
+I recompile gem5 and add `--debug-flags=RubyNetwork` to se-hello.sh.
+
+It produces a ton of output, but towards the top is the following line:
+```
+      0: system.ruby.network: Multicast enabled.
+```
+
+To add a new debug flag, I add this to the 'SConscript' file in the same directory:
+```
+DebugFlag('GarnetMulticast')
+```
+And I change the DPRINTFs to use the new flag.
+
+I also needed to add this to GarnetNetwork.cc:
+```
+#include "debug/GarnetMulticast.hh"
+```
+
+After recompiling and changing se-hello.sh to use `--debug-flags=GarnetMulticast`,
+far less debug output is produced, with just the desired line.
+
+Removing the `--multicast` flag produces:
+```
+      0: system.ruby.network: Multicast not enabled. Using multiple-unicast instead.
+```
+
+The multicast toggle is now installed.

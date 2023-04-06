@@ -35,6 +35,7 @@
 
 #include "base/cast.hh"
 #include "base/compiler.hh"
+#include "debug/GarnetMulticast.hh"
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/common/NetDest.hh"
 #include "mem/ruby/network/MessageBuffer.hh"
@@ -71,6 +72,13 @@ GarnetNetwork::GarnetNetwork(const Params &p)
     m_buffers_per_ctrl_vc = p.buffers_per_ctrl_vc;
     m_routing_algorithm = p.routing_algorithm;
     m_next_packet_id = 0;
+    m_enable_multicast = p.enable_multicast;
+
+    if (m_enable_multicast)
+        DPRINTF(GarnetMulticast, "Multicast enabled.\n");
+    else
+        DPRINTF(GarnetMulticast, "Multicast not enabled."
+            " Using multiple-unicast instead.\n");
 
     m_enable_fault_model = p.enable_fault_model;
     if (m_enable_fault_model)

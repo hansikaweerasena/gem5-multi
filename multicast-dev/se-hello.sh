@@ -1,5 +1,6 @@
 ../build/X86/gem5.opt \
 	--stats-file=se-test-stats \
+	--debug-flags=GarnetMulticast \
 	../configs/deprecated/example/se.py \
 	--ruby \
 	--network=garnet \
