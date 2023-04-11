@@ -313,3 +313,168 @@ The multicast toggle is now installed.
 Hansika and I already decided on a flit encoding strategy (destination bitvector).
 I need to figure out how many flits each packet will consist of.
 I also need to figure out which routing algorithm to implement.
+
+
+
+## 2023-04-07
+
+### Multicast control message size
+
+Formula I came up with to calculate multicast control message size:
+```
+size = normal control message size
+       - num bits used for single destination
+       + num bits used for bitvector of destinations
+```
+
+In src/mem/ruby/network/Network.py:
+```
+    control_msg_size = Param.Int(8, "")
+```
+
+And in https://www.gem5.org/documentation/general_docs/ruby/garnet-2/:
+
+> control_msg_size: The size of control messages in bytes.
+> Default is 8.
+> m_data_msg_size in Network.cc is set to the block size in bytes + control_msg_size.
+
+Why is it 8?
+My searches aren't turning up any reasons.
+
+I'm guessing 8 is just an arbitrary value,
+intended to be changed according to the hardware being simulated.
+If this is the case, I'll need to look into real flit encoding strategies
+to get a sense of what goes into a control message.
+
+To encode a single destination on a network with 16 nodes, you need 4 bits.
+To encode multiple destinations on a similar network, you need 16 bits.
+In this example, 8 + 2 = 10 bytes is a reasonable control message size.
+
+Possible revised multicast message size:
+```
+size = control message size
+       + num bits used for bitvector of destinations
+```
+
+
+## 2023-04-11
+
+### Researching multicast routing algorithms
+
+"Interconnection networks an engineering approach",
+Duato 2003
+
+https://ufl-flvc.primo.exlibrisgroup.com/permalink/01FALSC_UFL/175ga98/alma990206564170306597
+
+#### "5.4 Models for Multicast Communication",
+
+- Optimal Multicast Path (OMP) -- Find the shortest path with no branches
+visiting all nodes.
+
+- Optimal Multicast Cycle (OMC) -- Similar to OMP, but the source node is also
+the final destination. Satisfies the need for destination nodes to
+acknowledge receipt.
+
+- Minimal Steiner Tree (MST) -- A tree with minimal total length that connects
+the source to all destination nodes.
+
+- Optimal Multicast Tree (OMT) -- Goal is to minimize time to get from source
+to destinations. Total length may be longer than MST.
+
+The problems of finding an OMP, OMC, or MST for a 2D-mesh are NP-complete.
+
+#### "5.5 Hardware Implementations of Multicast"
+
+##### "5.5.2 Tree-based Multicast Routing"
+
+This section has a really good explanation of multicast routing and hardware
+requirements.
+
+> The spanning binomial tree is suitable for networks supporting SAF or VCT
+> switching techniques. When combined with wormhole switching, tree based
+> multicast routing suffers from several drawbacks. Since there is no message
+> buffering at routers, if one branch of the tree is blocked, then all are
+> blocked.
+
+> Tree based multicast routing may cause a message to hold many channels for
+> extended periods, thereby increasing network contention. Moreover, deadlock
+> can occur using such a routing scheme.
+
+A naive extension of the XY routing algorithm to multicast can cause deadlock:
+
+> In a similar manner, you may attempt to extend deadlock free unicast routing
+> on a 2 D mesh to encompass multicast. An extension of the XY routing method
+> to include multicast is shown in Figure 5.14, in which the message is
+> delivered to each destination in the manner described. As in the hypercube
+> example, the progress of the tree requires that all branches be unblocked.
+> For example, suppose that the header flit in Figure 5.14 is blocked due to
+> the busy channel [(4, 2), (4, 3)]. Node (4, 2) cannot buffer the entire
+> message. As a result of this constraint, the progress of messages in the
+> entire routing tree must be stopped. In turn, other messages requiring
+> segments of this tree are also blocked. Network congestion may be increased,
+> thereby degrading the performance of the network. Moreover, this routing
+> algorithm can lead to deadlock.
+
+> Double Channel XY Multicast Wormhole Routing
+
+> The following double channel XY multicast routing algorithm for wormhole
+> switching was proposed by Lin, McKinley, and Ni [206] for 2 D mesh. The
+> algorithm uses an extension of the XY routing algorithm, which was shown
+> above to be susceptible to deadlock. In order to avoid cyclic channel
+> dependencies, each channel in the 2 D mesh is doubled, and the network is
+> partitioned into four subnetworks
+
+> While this multicast tree approach avoids deadlock, a major disadvantage is
+> the need for double channels. It may be possible to implement double channels
+> with virtual channels; however, the signaling for multicast communication is
+> more complex. Moreover, the number of subnetworks grows exponentially with
+> the number of dimensions of the mesh, increasing the number of channels
+> between every pair of nodes accordingly.
+
+This is interesting:
+
+> Tree based multicast routing is more suitable for SAF or VCT switching than
+> for wormhole switching. The reason is that when a branch of the tree is
+> blocked, the remaining branches cannot advance if wormhole switching is used.
+> There is a special case in which tree based multicast routing is suitable for
+> networks using wormhole switching: the implementation of invalidation or
+> update commands in DSMs with coherent caches [224]. Taking into account the
+> growing interest in these machines, it is worth studying this special case.
+
+> Message data only require a few flits. Typically, a single 32 bit flit
+> containing a memory address is enough for invalidation commands. The command
+> itself can be encoded in the first flit together with the destination node
+> address. An update command usually requires one or two additional flits to
+> carry the value of the word to be updated. Hence, it is possible to design
+> compact hardware routers with buffers deep enough to store a whole message.
+> However, when multicast routing is considered, the message header must encode
+> the destination addresses. As a consequence, message size could be several
+> times the data size. Moreover, messages have a very different size depending
+> on the number of destinations, therefore preventing the use of fixed size
+> hardware buffers to store a whole message. A possible solution consists of
+> encoding destination addresses as a bit string (see Section 5.5.1) while
+> limiting the number of destination nodes that can be reached by each message
+> to a small value. This approach will be studied in Section 5.6 and applied to
+> the implementation of barrier synchronization and reduction.
+
+An alternative "pruning method" of preventing deadlock is described, where a
+some destinations of a unicast method can be split off into multiple-unicast
+messages if needed. I'll need to reread this section later.
+
+At the start of the next section:
+
+> To support deadlock free multicast or broadcast wormhole routing, the tree
+> based communication pattern does not perform well unless messages are very
+> short because the entire tree is blocked if any of its branches are blocked.
+
+This is interesting, because Paper 4 ("Multicast On-Chip Trafﬁc Analysis
+Targeting Manycore NoC Design") says:
+
+> In the MESI coherence protocol, multicast messages are mostly invalidations
+> which are generated upon a write to shared data and sent to the cores that
+> are currently sharing it. Invalidations are short control messages, assumed
+> to be of 8 bytes in our scenario.
+
+> short messages account for more than 99% of the multicast in average. This
+> ﬁgure is rather independent of the system size and, in fact, rarely drops
+> below 98%.
