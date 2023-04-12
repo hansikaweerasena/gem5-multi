@@ -478,3 +478,48 @@ Targeting Manycore NoC Design") says:
 > short messages account for more than 99% of the multicast in average. This
 > ﬁgure is rather independent of the system size and, in fact, rarely drops
 > below 98%.
+
+
+## 2023-04-12
+
+### "5.5.3 Path Based Multicast Communication"
+
+This seems to indicate path-based routing requires a list of destinations
+instead of a bitvector:
+
+> In path based routing, the header of each copy of a message consists of
+> multiple destinations. The source node arranges these destinations as an
+> ordered list, depending on their intended order of traversal. As soon as the
+> message is injected into the network, it is routed based on the address in
+> the leading header flit corresponding to the first destination. Once the
+> message header reaches the router of the first destination node, the flit
+> containing this address is removed by the router. Now the message is routed
+> to the node whose address is contained in the next header flit.
+
+#### "Base Routing Conformed Path"
+
+> Deadlock avoidance is considerably simplified if unicast and multicast
+> routing use the same routing algorithm. Moreover, using the same routing
+> hardware for unicast and multicast routing allows the design of compact and
+> fast routers. The Hamiltonian path based routing algorithms proposed in
+> previous sections improve performance over multiple unicast routing. However,
+> their development has been in a different track compared to e cube and
+> adaptive routing. Moreover, it makes no sense sacrificing the performance of
+> unicast messages to improve the performance of multicast messages, which
+> usually represent a much smaller percentage of network traffic. Thus, as
+> indicated in [269], it is unlikely that a system in the near future will be
+> able to take advantage of Hamiltonian path based routing.
+
+> The base routing conformed path (BRCP) model [269] defines multicast routing
+> algorithms that are compatible with existing unicast routing algorithms. This
+> model also uses path based routing. The basic idea consists of allowing a
+> multidestination message to be transmitted through any path in the network as
+> long as it is a valid path conforming to the base routing scheme. For
+> example, on a 2 D mesh with XY routing, a valid path can be any row, column,
+> or row column.
+
+### Difficulties
+
+While I was reading the ebook, a message popped up saying "this session is no
+longer valid". When I reloaded the page, it said someone is reading the book
+and I will have to wait. Brilliant.
