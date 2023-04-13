@@ -527,12 +527,73 @@ and I will have to wait. Brilliant.
 
 ## 2023-04-13
 
-Summary of routing algorithm options:
+### Summary of 3 routing algorithm options
 
-### Double-Channel XY Multicast Wormhole Routing
+#### Double-Channel XY Multicast Wormhole Routing
 
-An extension of XY to multicast. Requires double channels.
+An extension of XY to multicast. Requires double channels to prevent deadlock.
+
+> It may be possible to implement double channels with virtual channels;
+> however, the signaling for multicast communication is more complex.
 
 ![](./images/xy-multicast.png)
 
 ![](./images/xy-multicast-routing-pattern.png)
+
+#### Dual-Path Routing
+
+Nodes in the network are given an ordering. Destination addresses for a
+multicast message are sorted according to this ordering. The message travels
+along the path to the next destination. When that destination is reached, it is
+removed from the message's list and the message is passed to the next
+destination.
+
+"Dual-path" refers to how the source initially sends two messages in opposite
+directions. The book describes an extension to this using 4 directions, but it
+has some disadvantages.
+
+Note: this will not work with the bitvector destination encoding strategy. It
+requires an ordered list. If implemented in gem5, it would require changing the
+message size as it travels along. I don't know how hard this would be. If
+necessary, we could leave the message size at its longest the entire time, but
+we wouldn't see the same performance improvement.
+
+![](./images/dual-path.png)
+
+#### Base-Routing Conformed Path
+
+A multicast message can be sent only if it's total path is a valid path
+according to the unicast algorithm being used. Multicast messages may need to
+be split into smaller multicast messages to conform to this requirment.
+
+Note:
+
+> if the base routing algorithm is deadlock free, the multicast routing
+> algorithm is also deadlock free.
+
+Grouping destinations into valid multicasts requires some work:
+
+> Once the set of valid paths for multidestination messages has been
+> determined, it is necessary to define routing algorithms for collective
+> communication. The hierarchical leader based (HL) scheme has been proposed in
+> [269] to implement multicast and broadcast. Given a multicast destination
+> set, this scheme tries to group the destinations in a hierarchical manner so
+> that the minimum number of messages is needed to cover all the destinations.
+
+The grouping algorithm is descibed next in the book.
+
+![](./images/brcp.png)
+
+### Easiest option to implement
+
+All 3 options probably could be successfully implemented. If I had to guess,
+double-channel XY would take the least amount of work to do so.
+
+### More options
+
+The 2003 Duato book listed a few more routing algorithms, but they were either
+more complex or specialized.
+
+2003 was a long time ago; better algorithm have probably been found since then.
+The book provides citations for the algorithms. I can find them on IEEE and
+look for newer papers that cited them proposing better algorithms.
