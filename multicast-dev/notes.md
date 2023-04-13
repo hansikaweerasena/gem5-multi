@@ -523,3 +523,16 @@ instead of a bitvector:
 While I was reading the ebook, a message popped up saying "this session is no
 longer valid". When I reloaded the page, it said someone is reading the book
 and I will have to wait. Brilliant.
+
+
+## 2023-04-13
+
+Summary of routing algorithm options:
+
+### Double-Channel XY Multicast Wormhole Routing
+
+An extension of XY to multicast. Requires double channels.
+
+![](./images/xy-multicast.png)
+
+![](./images/xy-multicast-routing-pattern.png)
