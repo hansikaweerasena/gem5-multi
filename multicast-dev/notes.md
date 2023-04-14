@@ -595,5 +595,5 @@ The 2003 Duato book listed a few more routing algorithms, but they were either
 more complex or specialized.
 
 2003 was a long time ago; better algorithm have probably been found since then.
-The book provides citations for the algorithms. I can find them on IEEE and
-look for newer papers that cited them proposing better algorithms.
+The book provides citations for the algorithms it discusses.
+I can look for them on IEEE and look for newer papers that cited them proposing better algorithms.
