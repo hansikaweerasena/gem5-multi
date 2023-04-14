@@ -597,3 +597,13 @@ more complex or specialized.
 2003 was a long time ago; better algorithm have probably been found since then.
 The book provides citations for the algorithms it discusses.
 I can look for them on IEEE and look for newer papers that cited them proposing better algorithms.
+
+
+### Potential Problems in implementation of Multicast in NoC -: Hansika
+
+> Does the existing NoC router (Crossbar of the router) able to send one flit to multiple output ports in same cycle? If not are there options to do that or do we need to do architectural change to introduce multicast support to the router?
+> In Tree-based multicast the ahead of line waiting of because of one opstream router buffer can lead to blocking of the whole multicast message being propagated. Is there way to handle or minimize this? Like intoducting a multicast spesific buffer at each router to handle such scnarios.
+
+
+
+
