@@ -597,3 +597,164 @@ more complex or specialized.
 2003 was a long time ago; better algorithm have probably been found since then.
 The book provides citations for the algorithms it discusses.
 I can look for them on IEEE and look for newer papers that cited them proposing better algorithms.
+
+
+
+## 2023-05-01
+
+I'm looking at flitisizeMessage in NetworkInterface.cc.
+One RouteInfo struct is created for the message, and passed with each flit.
+RouteInfo is defined in CommonTypes.hh, and has the following attributes:
+```
+    // destination format for table-based routing
+    int vnet;
+    NetDest net_dest;
+
+    // src and dest format for topology-specific routing
+    int src_ni;
+    int src_router;
+    int dest_ni;
+    int dest_router;
+    int hops_traversed;
+```
+net_dest, dest_ni, and dest_router are problematic.
+In my initial survey of the code, I didn't notice this.
+RouteInfo was designed with only one destination in mind,
+and will need to be modified to allow for multiple destinations.
+
+I'll need to change each of these single variables to vectors,
+and I'll also need to change every part of the code that references these to treat
+them as vectors (even if they are just vectors of length 1 in multiple-unicast mode).
+Here's where RouteInfo is mentioned:
+```
+$ grep -lr RouteInfo
+simple/PerfectSwitch.cc
+simple/routing/WeightBased.cc
+simple/routing/BaseRoutingUnit.hh
+simple/routing/WeightBased.hh
+garnet/Router.cc
+garnet/GarnetNetwork.cc
+garnet/NetworkInterface.cc
+garnet/Router.hh
+garnet/RoutingUnit.cc
+garnet/flit.hh
+garnet/GarnetNetwork.hh
+garnet/RoutingUnit.hh
+garnet/CommonTypes.hh
+garnet/flit.cc
+garnet/Credit.cc
+```
+
+Hopefully the required changes aren't too involved.
+I created a new branch, RouteInfo-modification, so I don't mess up my working code.
+
+
+
+## 2023-05-02
+
+These files all mention the problematic elements of RouteInfo:
+```
+$ grep -lr 'net_dest\|dest_ni\|dest_router'
+garnet/GarnetNetwork.cc
+garnet/NetworkInterface.cc
+garnet/RoutingUnit.cc
+garnet/RoutingUnit.hh
+garnet/CommonTypes.hh
+garnet/flit.cc
+```
+I think its safe to ignore the other files in my list from yesterday.
+
+Here are the lines as well:
+```
+$ grep -r 'net_dest\|dest_ni\|dest_router'
+GarnetNetwork.cc:    int dest_node = route.dest_router;
+NetworkInterface.cc:        route.net_dest = new_net_msg_ptr->getDestination();
+NetworkInterface.cc:        route.dest_ni = destID;
+NetworkInterface.cc:        route.dest_router = m_net_ptr->get_router_id(destID, vnet);
+RoutingUnit.cc:    if (route.dest_router == m_router->get_id()) {
+RoutingUnit.cc:        outport = lookupRoutingTable(route.vnet, route.net_dest);
+RoutingUnit.cc:            lookupRoutingTable(route.vnet, route.net_dest); break;
+RoutingUnit.cc:            lookupRoutingTable(route.vnet, route.net_dest); break;
+RoutingUnit.cc:    int dest_id = route.dest_router;
+RoutingUnit.hh:    int  lookupRoutingTable(int vnet, NetDest net_dest);
+CommonTypes.hh:        : vnet(0), src_ni(0), src_router(0), dest_ni(0), dest_router(0),
+CommonTypes.hh:    NetDest net_dest;
+CommonTypes.hh:    int dest_ni;
+CommonTypes.hh:    int dest_router;
+flit.cc:    out << "Dest NI=" << m_route.dest_ni << " ";
+flit.cc:    out << "Dest Router=" << m_route.dest_router << " ";
+```
+
+
+### GarnetNetwork.cc
+
+So there's this function called "update_traffic_distribution".
+I'm guessing its used for recording statistics.
+```
+void
+GarnetNetwork::update_traffic_distribution(RouteInfo route)
+{
+    int src_node = route.src_router;
+    int dest_node = route.dest_router;
+    int vnet = route.vnet;
+
+    if (m_vnet_type[vnet] == DATA_VNET_)
+        (*m_data_traffic_distribution[src_node][dest_node])++;
+    else
+        (*m_ctrl_traffic_distribution[src_node][dest_node])++;
+}
+```
+
+I am correct. Looking at GarnetNetwork.hh, I find:
+```
+    std::vector<std::vector<statistics::Scalar *>> m_data_traffic_distribution;
+    std::vector<std::vector<statistics::Scalar *>> m_ctrl_traffic_distribution;
+```
+
+To make this work for multiple destinations,
+I think I'll have it loop through the destinations and update the corresponding
+part of the traffic distribution.
+But first, I should look to see where update_traffic_distribution is called to
+see if this plan makes sense.
+
+update_traffic_distribution is called in one place: flitisizeMessage.
+
+I think my plan is reasonable.
+
+### NetworkInterface.cc
+
+This is where flitisizeMessage is, which was the original cause for these changes.
+
+### RoutingUnit.cc
+
+This one is tricky.
+This file is where the 'outportCompute' functions are.
+
+TABLE and XY can only be used with multiple-unicast,
+so whatever changes I make need to leave these alone.
+
+The first issue is the fact that outportCompute only returns one outport.
+To handle multicast, outportCompute needs to be able to return multiple outports,
+each with a subset of the destinations associated with them.
+As in, these destinations need to be sent through this outport,
+and those destinations through that outport.
+
+outportCompute is called by one other function, route_compute (in Router.cc).
+route_compute is called by 'wakeup' in InputUnit.cc.
+Here's the problem area:
+```
+            // Route computation for this vc
+            int outport = m_router->route_compute(t_flit->get_route(),
+                m_id, m_direction);
+
+            // Update output port in VC
+            // All flits in this packet will use this output port
+            // The output port field in the flit is updated after it wins SA
+            grant_outport(vc, outport);
+
+```
+In this code, the outport is computed from the head flit,
+and every flit is sent along that outport.
+What needs to happen, is that the set of outports with corresponding destinations
+is computed, and every flit is sent to every outport with only the
+corresponding destinations.
