@@ -758,3 +758,21 @@ and every flit is sent along that outport.
 What needs to happen, is that the set of outports with corresponding destinations
 is computed, and every flit is sent to every outport with only the
 corresponding destinations.
+
+Essentially, if the message needs to split off at this point, new RouteInfos
+need to be constructed and associated with the flits.
+
+The above code calls grant_outport, which is defined in InputUnit.hh:
+```
+    inline void
+    grant_outport(int vc, int outport)
+    {
+        virtualChannels[vc].set_outport(outport);
+    }
+```
+This is also problematic, because each virtual channel can only have one outport
+associated with it here.
+```
+    // Input Virtual channels
+    std::vector<VirtualChannel> virtualChannels;
+```
