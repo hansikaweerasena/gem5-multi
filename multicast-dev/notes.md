@@ -776,3 +776,72 @@ associated with it here.
     // Input Virtual channels
     std::vector<VirtualChannel> virtualChannels;
 ```
+
+
+
+## 2023-05-05
+
+### RoutingUnit.hh
+
+Just a function prototype.
+
+### CommonTypes.hh
+
+Contains the definition of RouteInfo.
+
+### flit.cc
+
+Print statement for debugging. Easy to change.
+
+### Summary
+
+It seems like the main issues are:
+
+- Modify all of the destination variables to allow for storing multiple
+destinations.
+
+- The routers are currently designed to pass flits forward, unchanged. However,
+with multicast the routers need to remove destinations when they are reached
+and split destinations sets at branches. The flit object provides a set_route
+method, which we can use for this. It is unknown to me if there is any code is
+based on the assumption the destination of a flit does not change.
+
+- The code currently allows granting only one outport to a virtual channel at a
+time. In order to allow branching with wormhole routing, a virtual channgel
+needs up to two outports at once. This seems like the type of change that could
+allow deadlock to occur.
+
+From https://www.gem5.org/documentation/general_docs/ruby/garnet-2/
+
+> vcs_per_vnet: number of virtual channels (VC) per virtual network. Default is
+> 4. This can also be set from the command line with –vcs-per-vnet.
+
+> Flow Control
+>
+> Virtual Channel Flow Control is used in the design. Each VC can hold one
+> packet. There are two kinds of VCs in the design - control and data. The
+> buffer depth in each can be independently controlled from GarnetNetwork.py.
+> The default values are 1-flit deep control VCs, and 4-flit deep data VCs.
+> Default size of control packets is 1-flit, and data packets is 5-flit.
+
+From the Interconnection Networks book:
+
+> The algorithm uses an extension of the XY routing algorithm, which was shown
+> above to be susceptible to deadlock. In order to avoid cyclic channel
+> dependencies, each channel in the 2 D mesh is doubled, and the network is
+> partitioned into four subnetworks, N_(+X,+Y), N_(+X,Y), N_(X,+Y), and N_(X,Y).
+
+> While this multicast tree approach avoids deadlock, a major disadvantage is
+> the need for double channels. It may be possible to implement double channels
+> with virtual channels; however, the signaling for multicast communication is
+> more complex.
+
+Garnet already has multiple virtual channels, but separates their use according
+to packet type. The multicast-XY algorithm requires them to be separated
+according to direction of packet travel. So the number of virtual channels in
+garnet will still need to be doubled.
+
+I am not completely sure why gem5 uses separate VCs for control and data
+packets, but my guess is that it prevents control packets from being slowed
+down during large data transfers in the network. I do not know if this is an
+just an optimization, or if it is necessary to prevent deadlock.
