@@ -845,3 +845,86 @@ I am not completely sure why gem5 uses separate VCs for control and data
 packets, but my guess is that it prevents control packets from being slowed
 down during large data transfers in the network. I do not know if this is an
 just an optimization, or if it is necessary to prevent deadlock.
+
+
+
+## 2023-05-07
+
+It's not really possible to test the multicast code as I write it.
+I need all of the code to be done before multicast will work.
+However, I can run gem5 in unicast mode to make sure my changes haven't broken
+the existing functionality.
+
+The routing table is used by all routing algorithms, so net_dest must be made
+to work with multiple destinations.
+
+On Friday, Hansika suggested trying to structure the code modifications so that
+the existing outportCompute functions can be used as-is on a per destination basis,
+with some code outside of it that groups the destinations and duplicates the
+flits if needed.
+I think this is a good idea.
+
+It might be possible to leave the RouteInfo struct as-is, and simply modify the
+flits to carry a vector of RouteInfo.
+InputUnit::wakeup will run route_compute (a wrapper for outportCompute)
+on each route in the head flit.
+
+InputUnit::wakeup calls "advance_stage" on the flit.
+advance_stage is also called in SwitchAllocator.cc and CrossbarSwitch.cc.
+Each flit has an "m_outport" variable.
+SwitchAllocator::arbitrate_outports sets the outport for the flit.
+
+I'm trying to figure out where the flit should get duplicated.
+Moving the flit through the router is a multi-stage process,
+and the state of the flit during the process is recorded inside the flit.
+
+In CrossbarSwitch::wakeup:
+```
+        if (t_flit->is_stage(ST_, curTick())) {
+            int outport = t_flit->get_outport();
+
+            // flit performs LT_ in the next cycle
+            t_flit->advance_stage(LT_, m_router->clockEdge(Cycles(1)));
+            t_flit->set_time(m_router->clockEdge(Cycles(1)));
+
+            // This will take care of waking up the Network Link
+            // in the next cycle
+            m_router->getOutputUnit(outport)->insert_flit(t_flit);
+            switch_buffer.getTopFlit();
+            m_crossbar_activity++;
+        }
+```
+`m_router->getOutputUnit(outport)->insert_flit(t_flit);` copies the flit to the
+output unit corresponding to the outport it was given.
+Then, `switch_buffer.getTopFlit();` removes the flit from the switch_buffer.
+
+I think this is a good place to duplicate the flits.
+I'll need to make a procedure that takes a flit, with all of its RouteInfos and
+outports and other state, and produces one or more new flits with the
+destinations and outports correctly grouped.
+
+flit.hh will be changed so that each flit has a vector of RouteInfo and a vector
+of outports.
+Each outport corresponds to the RouteInfo with the same index.
+The duplicateAndSplitDestinations procedure will return a vector of flits,
+with the destinations correctly grouped.
+If every outport number is the same, it will simply return a vector with one flit.
+
+Now, with all of these vectors being sent around in flits, I have no idea what the
+performance penalty is going to be.
+Design-wise, it seems like each flit carries far more data than it should.
+
+In SwitchAllocator::arbitrate_outports:
+```
+                // Update outport field in the flit since this is
+                // used by CrossbarSwitch code to send it out of
+                // correct outport.
+                // Note: post route compute in InputUnit,
+                // outport is updated in VC, but not in flit
+                t_flit->set_outport(outport);
+```
+The outport is computed once for the head flit, and the VC the head flit came from
+is assigned that outport.
+Here, the outport is being copied to the variable inside the flit, so it can be
+used by CrossbarSwitch.
+This seems like a questionable design choice.
