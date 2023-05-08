@@ -121,7 +121,7 @@ SwitchAllocator::arbitrate_inports()
             if (input_unit->need_stage(invc, SA_, curTick())) {
                 // This flit is in SA stage
 
-                int outport = input_unit->get_outport(invc);
+                int outport = (input_unit->get_outports(invc))[0];
                 int outvc = input_unit->get_outvc(invc);
 
                 // check if the flit in this InputVC is allowed to be sent
@@ -327,7 +327,7 @@ SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
         for (int vc_offset = 0; vc_offset < m_vc_per_vnet; vc_offset++) {
             int temp_vc = vc_base + vc_offset;
             if (input_unit->need_stage(temp_vc, SA_, curTick()) &&
-               (input_unit->get_outport(temp_vc) == outport) &&
+               ((input_unit->get_outports(temp_vc))[0] == outport) &&
                (input_unit->get_enqueue_time(temp_vc) < t_enqueue_time)) {
                 return false;
             }

@@ -928,3 +928,42 @@ is assigned that outport.
 Here, the outport is being copied to the variable inside the flit, so it can be
 used by CrossbarSwitch.
 This seems like a questionable design choice.
+
+
+
+## 2023-05-08
+
+Build gem5 again, to make sure it still compiles:
+```
+scons ./build/X86/gem5.opt -j 6
+```
+
+### m_routes
+
+Change m_route to a vector of RouteInfo, instead of just a single RouteInfo.
+Still only storing a single route (index 0).
+Changed all references of m_route to m_routes[0].
+Recompile and test.
+
+Change get_route() to accept an index as an argument.
+Change all calls to get_route() to get_route(0).
+Recompile and test.
+
+Add method "get_num_routes()".
+
+### grant_outport
+
+Make change to allow virtual channels to have multiple outports associated with it.
+
+Change grant_outport to grant_outports.
+Returns a vector instead of a single int.
+
+Go through and fix function calls as necessary.
+
+Recompile and test.
+
+### InputUnit::wakeup
+
+Iterate through all routes to compute outports.
+
+### NetworkInterface::flitisizeMessage

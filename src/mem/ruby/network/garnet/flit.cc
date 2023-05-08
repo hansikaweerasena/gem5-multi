@@ -55,7 +55,7 @@ flit::flit(int packet_id, int id, int  vc, int vnet, RouteInfo route, int size,
     m_id = id;
     m_vnet = vnet;
     m_vc = vc;
-    m_route = route;
+    m_routes.push_back(route);
     m_stage.first = I_;
     m_stage.second = curTime;
     m_width = bWidth;
@@ -83,7 +83,7 @@ flit::serialize(int ser_id, int parts, uint32_t bWidth)
     int new_size = (int)divCeil((float)msgSize, (float)bWidth);
     assert(new_id < new_size);
 
-    flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_route,
+    flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_routes[0],
                     new_size, m_msg_ptr, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
@@ -98,7 +98,7 @@ flit::deserialize(int des_id, int num_flits, uint32_t bWidth)
     int new_size = (int)divCeil((float)msgSize, (float)bWidth);
     assert(new_id < new_size);
 
-    flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_route,
+    flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_routes[0],
                     new_size, m_msg_ptr, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
@@ -116,10 +116,10 @@ flit::print(std::ostream& out) const
     out << "Size=" << m_size << " ";
     out << "Vnet=" << m_vnet << " ";
     out << "VC=" << m_vc << " ";
-    out << "Src NI=" << m_route.src_ni << " ";
-    out << "Src Router=" << m_route.src_router << " ";
-    out << "Dest NI=" << m_route.dest_ni << " ";
-    out << "Dest Router=" << m_route.dest_router << " ";
+    out << "Src NI=" << m_routes[0].src_ni << " ";
+    out << "Src Router=" << m_routes[0].src_router << " ";
+    out << "Dest NI=" << m_routes[0].dest_ni << " ";
+    out << "Dest Router=" << m_routes[0].dest_router << " ";
     out << "Set Time=" << m_time << " ";
     out << "Width=" << m_width<< " ";
     out << "]";

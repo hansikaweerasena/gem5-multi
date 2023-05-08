@@ -57,8 +57,8 @@ class VirtualChannel
     void set_active(Tick curTime);
     void set_outvc(int outvc)               { m_output_vc = outvc; }
     inline int get_outvc()                  { return m_output_vc; }
-    void set_outport(int outport)           { m_output_port = outport; };
-    inline int get_outport()                  { return m_output_port; }
+    void set_outports(std::vector<int> outport) { m_output_ports = outport; };
+    inline std::vector<int> get_outports()  { return m_output_ports; }
 
     inline Tick get_enqueue_time()          { return m_enqueue_time; }
     inline void set_enqueue_time(Tick time) { m_enqueue_time = time; }
@@ -101,7 +101,11 @@ class VirtualChannel
   private:
     flitBuffer inputBuffer;
     std::pair<VC_state_type, Tick> m_vc_state;
-    int m_output_port;
+
+    /* the outport at each index corresponds to the destinations of the message
+       sitting in the VC; can contain duplicates */
+    std::vector<int> m_output_ports;
+
     Tick m_enqueue_time;
     int m_output_vc;
 };

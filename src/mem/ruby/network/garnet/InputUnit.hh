@@ -76,9 +76,9 @@ class InputUnit : public Consumer
     }
 
     inline void
-    grant_outport(int vc, int outport)
+    grant_outports(int vc, std::vector<int> outports)
     {
-        virtualChannels[vc].set_outport(outport);
+        virtualChannels[vc].set_outports(outports);
     }
 
     inline void
@@ -87,10 +87,10 @@ class InputUnit : public Consumer
         virtualChannels[vc].set_outvc(outvc);
     }
 
-    inline int
-    get_outport(int invc)
+    inline std::vector<int>
+    get_outports(int invc)
     {
-        return virtualChannels[invc].get_outport();
+        return virtualChannels[invc].get_outports();
     }
 
     inline int

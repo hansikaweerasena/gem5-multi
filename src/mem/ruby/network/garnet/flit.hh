@@ -65,7 +65,9 @@ class flit
     Tick get_time() { return m_time; }
     int get_vnet() { return m_vnet; }
     int get_vc() { return m_vc; }
-    RouteInfo get_route() { return m_route; }
+    RouteInfo get_route(int i) { return m_routes[i]; }
+    std::vector<RouteInfo> get_routes() { return m_routes; }
+    int get_num_routes() { return m_routes.size(); }
     MsgPtr& get_msg_ptr() { return m_msg_ptr; }
     flit_type get_type() { return m_type; }
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
@@ -74,12 +76,12 @@ class flit
     void set_outport(int port) { m_outport = port; }
     void set_time(Tick time) { m_time = time; }
     void set_vc(int vc) { m_vc = vc; }
-    void set_route(RouteInfo route) { m_route = route; }
+    void set_route(RouteInfo route) { m_routes[0] = route; }
     void set_src_delay(Tick delay) { src_delay = delay; }
     void set_dequeue_time(Tick time) { m_dequeue_time = time; }
     void set_enqueue_time(Tick time) { m_enqueue_time = time; }
 
-    void increment_hops() { m_route.hops_traversed++; }
+    void increment_hops() { m_routes[0].hops_traversed++; }
     virtual void print(std::ostream& out) const;
 
     bool
@@ -120,7 +122,7 @@ class flit
     int m_id;
     int m_vnet;
     int m_vc;
-    RouteInfo m_route;
+    std::vector<RouteInfo> m_routes;
     int m_size;
     Tick m_enqueue_time, m_dequeue_time;
     Tick m_time;
