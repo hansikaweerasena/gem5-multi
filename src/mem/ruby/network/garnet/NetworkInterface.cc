@@ -422,25 +422,25 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         // NetDest format is used by the routing table
         // Custom routing algorithms just need destID
 
-        RouteInfo route;
-        route.vnet = vnet;
-        route.net_dest = new_net_msg_ptr->getDestination();
-        route.src_ni = m_id;
-        route.src_router = oPort->routerID();
-        route.dest_ni = destID;
-        route.dest_router = m_net_ptr->get_router_id(destID, vnet);
+        std::vector<RouteInfo> routes;
+        routes[0].vnet = vnet;
+        routes[0].net_dest = new_net_msg_ptr->getDestination();
+        routes[0].src_ni = m_id;
+        routes[0].src_router = oPort->routerID();
+        routes[0].dest_ni = destID;
+        routes[0].dest_router = m_net_ptr->get_router_id(destID, vnet);
 
         // initialize hops_traversed to -1
         // so that the first router increments it to 0
-        route.hops_traversed = -1;
+        routes[0].hops_traversed = -1;
 
         m_net_ptr->increment_injected_packets(vnet);
-        m_net_ptr->update_traffic_distribution(route);
+        m_net_ptr->update_traffic_distribution(routes[0]);
         int packet_id = m_net_ptr->getNextPacketID();
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
             flit *fl = new flit(packet_id,
-                i, vc, vnet, route, num_flits, new_msg_ptr,
+                i, vc, vnet, routes, num_flits, new_msg_ptr,
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
                 oPort->bitWidth(), curTick());

@@ -51,7 +51,8 @@ class flit
 {
   public:
     flit() {}
-    flit(int packet_id, int id, int vc, int vnet, RouteInfo route, int size,
+    flit(int packet_id, int id, int vc, int vnet,
+         std::vector<RouteInfo> routes, int size,
          MsgPtr msg_ptr, int MsgSize, uint32_t bWidth, Tick curTime);
 
     virtual ~flit(){};

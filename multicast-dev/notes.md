@@ -966,4 +966,15 @@ Recompile and test.
 
 Iterate through all routes to compute outports.
 
-### NetworkInterface::flitisizeMessage
+
+
+## 2023-05-10
+
+### flit.hh
+
+Change flit constructor to accept `vector<RouteInfo> routes`,
+instead of a single route.
+
+Change all calls to flit constructor.
+
+Recompile and test. Segmentation fault.
