@@ -1076,3 +1076,12 @@ gem5 has encountered a segmentation fault!
 ```
 
 My guess is that there is python code using flits that isn't being checked at compile time.
+
+I am going to recompile with gem5.debug and see if the backtrace is more descriptive.
+
+Same backtrace as before.
+I'll try using a debugger: https://www.gem5.org/documentation/general_docs/debugging_and_testing/debugging/debugger_based_debugging
+
+I used valgrind and figured out that I forgot to initialize the 0th element of a routes vector before attempting set its elements.
+
+It is working again, thankfully.

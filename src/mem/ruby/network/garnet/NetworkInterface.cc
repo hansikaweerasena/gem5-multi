@@ -423,6 +423,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         // Custom routing algorithms just need destID
 
         std::vector<RouteInfo> routes;
+        routes.push_back(RouteInfo());
         routes[0].vnet = vnet;
         routes[0].net_dest = new_net_msg_ptr->getDestination();
         routes[0].src_ni = m_id;
