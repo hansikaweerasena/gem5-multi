@@ -977,4 +977,102 @@ instead of a single route.
 
 Change all calls to flit constructor.
 
-Recompile and test. Segmentation fault.
+Recompile and test.
+Segmentation fault.
+Heres the simulation:
+```
+$ ./se-hello.sh
+gem5 Simulator System.  https://www.gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 version [DEVELOP-FOR-23.0]
+gem5 compiled May 10 2023 11:25:17
+gem5 started May 10 2023 11:28:26
+gem5 executing on debian-dell-g5, pid 8034
+command line: ../build/X86/gem5.opt --stats-file=se-test-stats --debug-flags=GarnetMulticast ../configs/deprecated/example/se.py --ruby --network=garnet --cpu-type=TimingSimpleCPU --caches --l2cache --num-l2cache=16 --num-cpus=16 --num-dirs=16 --topology=Mesh_XY --mesh-rows=4 --multicast --cmd=../tests/test-progs/hello/bin/x86/linux/hello
+
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The se.py script is deprecated. It will be removed in future releases of  gem5.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+warn: The `get_runtime_isa` function is deprecated. Please migrate away from using this function.
+Global frequency set at 1000000000000 ticks per second
+warn: No dot file generated. Please install pydot to generate the dot file and pdf.
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/mem/dram_interface.cc:690: warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (32 Mbytes)
+build/X86/base/statistics.hh:279: warn: One of the stats is a legacy stat. Legacy stat is a stat that does not belong to any statistics::Group. Legacy stat is deprecated.
+build/X86/base/statistics.hh:279: warn: One of the stats is a legacy stat. Legacy stat is a stat that does not belong to any statistics::Group. Legacy stat is deprecated.
+build/X86/base/statistics.hh:279: warn: One of the stats is a legacy stat. Legacy stat is a stat that does not belong to any statistics::Group. Legacy stat is deprecated.
+build/X86/base/statistics.hh:279: warn: One of the stats is a legacy stat. Legacy stat is a stat that does not belong to any statistics::Group. Legacy stat is deprecated.
+      0: system.ruby.network: Multicast enabled.
+build/X86/mem/ruby/network/garnet/GarnetNetwork.cc:115: info: Garnet version 3.0
+system.remote_gdb: Listening for connections on port 7000
+**** REAL SIMULATION ****
+build/X86/sim/simulate.cc:194: info: Entering event queue @ 0.  Starting simulation...
+gem5 has encountered a segmentation fault!
+
+--- BEGIN LIBC BACKTRACE ---
+../build/X86/gem5.opt(+0xe000b9)[0x55a63fbf30b9]
+../build/X86/gem5.opt(+0xe2454f)[0x55a63fc1754f]
+/lib/x86_64-linux-gnu/libpthread.so.0(+0x13140)[0x7fc72877e140]
+../build/X86/gem5.opt(+0x1a390dc)[0x55a64082c0dc]
+../build/X86/gem5.opt(+0x1a3a943)[0x55a64082d943]
+../build/X86/gem5.opt(+0x18a301a)[0x55a64069601a]
+../build/X86/gem5.opt(+0xe14c20)[0x55a63fc07c20]
+../build/X86/gem5.opt(+0xe3ef88)[0x55a63fc31f88]
+../build/X86/gem5.opt(+0xe3f5de)[0x55a63fc325de]
+../build/X86/gem5.opt(+0x13c54ac)[0x55a6401b84ac]
+../build/X86/gem5.opt(+0x4e10eb)[0x55a63f2d40eb]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x10cc93)[0x7fc72889bc93]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyObject_Call+0x5c)[0x7fc72885831c]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalFrameDefault+0x4a59)[0x7fc728803719]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x1a4ddc)[0x7fc728933ddc]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyFunction_Vectorcall+0x9d)[0x7fc728850c7d]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalFrameDefault+0x78c5)[0x7fc728806585]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x6f033)[0x7fc7287fe033]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalFrameDefault+0x6456)[0x7fc728805116]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x1a4ddc)[0x7fc728933ddc]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyFunction_Vectorcall+0x9d)[0x7fc728850c7d]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalFrameDefault+0x78c5)[0x7fc728806585]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x1a4ddc)[0x7fc728933ddc]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalCodeWithName+0x4e)[0x7fc72893412e]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(PyEval_EvalCodeEx+0x3e)[0x7fc72893417e]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(PyEval_EvalCode+0x1b)[0x7fc72892f72b]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x19f2a1)[0x7fc72892e2a1]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x111e84)[0x7fc7288a0e84]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(_PyEval_EvalFrameDefault+0x6456)[0x7fc728805116]
+/lib/x86_64-linux-gnu/libpython3.9.so.1.0(+0x6f033)[0x7fc7287fe033]
+../build/X86/gem5.opt(+0xe251f1)[0x55a63fc181f1]
+../build/X86/gem5.opt(+0x47a858)[0x55a63f26d858]
+--- END LIBC BACKTRACE ---
+./se-hello.sh: line 16:  8034 Segmentation fault      ../build/X86/gem5.opt --stats-file=se-test-stats --debug-flags=GarnetMulticast ../configs/deprecated/example/se.py --ruby --network=garnet --cpu-type=TimingSimpleCPU --caches --l2cache --num-l2cache=16 --num-cpus=16 --num-dirs=16 --topology=Mesh_XY --mesh-rows=4 --multicast --cmd="../tests/test-progs/hello/bin/x86/linux/hello"
+```
+
+My guess is that there is python code using flits that isn't being checked at compile time.
