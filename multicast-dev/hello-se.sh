@@ -1,7 +1,7 @@
-./build/X86/gem5.debug \
+../build/X86/gem5.debug \
 	--stats-file=se-test-stats \
 	--debug-flags=GarnetMulticast \
-	./configs/deprecated/example/se.py \
+	../configs/deprecated/example/se.py \
 	--ruby \
 	--network=garnet \
 	--cpu-type=TimingSimpleCPU \
@@ -13,4 +13,4 @@
 	--topology=Mesh_XY \
 	--mesh-rows=4 \
 	--multicast \
-	--cmd="./tests/test-progs/hello/bin/x86/linux/hello"
+	--cmd="../tests/test-progs/hello/bin/x86/linux/hello"

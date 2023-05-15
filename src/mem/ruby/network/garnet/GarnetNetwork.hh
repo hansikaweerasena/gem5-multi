@@ -84,6 +84,7 @@ class GarnetNetwork : public Network
     bool isFaultModelEnabled() const { return m_enable_fault_model; }
     FaultModel* fault_model;
 
+    bool isMulticastEnabled() { return m_enable_multicast; }
 
     // Internal configuration
     bool isVNetOrdered(int vnet) const { return m_ordered[vnet]; }

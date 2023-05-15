@@ -36,6 +36,7 @@
 #include <cmath>
 
 #include "base/cast.hh"
+#include "debug/GarnetMulticast.hh"
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/MessageBuffer.hh"
 #include "mem/ruby/network/garnet/Credit.hh"
@@ -385,8 +386,11 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         m_net_ptr->MessageSizeType_to_int(net_msg_ptr->getMessageSize()),
         vnet, oPort->bitWidth());
 
-    // loop to convert all multicast messages into unicast messages
-    for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
+    if (m_net_ptr->isMulticastEnabled()) {
+        DPRINTF(GarnetMulticast, "Flitisizing message as multicast. "
+            "Num Destinations: %d.\n", dest_nodes.size());
+
+        std::vector<RouteInfo> routes(dest_nodes.size(), RouteInfo());
 
         // this will return a free output virtual channel
         int vc = calculateVC(vnet);
@@ -394,46 +398,48 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         if (vc == -1) {
             return false ;
         }
+
         MsgPtr new_msg_ptr = msg_ptr->clone();
-        NodeID destID = dest_nodes[ctr];
 
-        Message *new_net_msg_ptr = new_msg_ptr.get();
-        if (dest_nodes.size() > 1) {
-            NetDest personal_dest;
-            for (int m = 0; m < (int) MachineType_NUM; m++) {
-                if ((destID >= MachineType_base_number((MachineType) m)) &&
-                    destID < MachineType_base_number((MachineType) (m+1))) {
-                    // calculating the NetDest associated with this destID
-                    personal_dest.clear();
-                    personal_dest.add((MachineID) {(MachineType) m, (destID -
-                        MachineType_base_number((MachineType) m))});
-                    new_net_msg_ptr->getDestination() = personal_dest;
-                    break;
+        for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
+
+            NodeID destID = dest_nodes[ctr];
+
+            Message *new_net_msg_ptr = new_msg_ptr.get();
+            if (dest_nodes.size() > 1) {
+                NetDest personal_dest;
+                for (int m = 0; m < (int) MachineType_NUM; m++) {
+                    if ((destID >= MachineType_base_number((MachineType) m)) &&
+                        destID < MachineType_base_number((MachineType) (m+1))) {
+                        // calculating the NetDest associated with this destID
+                        personal_dest.clear();
+                        personal_dest.add((MachineID) {(MachineType) m, (destID -
+                            MachineType_base_number((MachineType) m))});
+                        new_net_msg_ptr->getDestination() = personal_dest;
+                        break;
+                    }
                 }
+                net_msg_dest.removeNetDest(personal_dest);
+                // removing the destination from the original message to reflect
+                // that a message with this particular destination has been
+                // flitisized and an output vc is acquired
+                net_msg_ptr->getDestination().removeNetDest(personal_dest);
             }
-            net_msg_dest.removeNetDest(personal_dest);
-            // removing the destination from the original message to reflect
-            // that a message with this particular destination has been
-            // flitisized and an output vc is acquired
-            net_msg_ptr->getDestination().removeNetDest(personal_dest);
+
+            // Embed Route into the flits
+            // NetDest format is used by the routing table
+            // Custom routing algorithms just need destID
+            routes[ctr].vnet = vnet;
+            routes[ctr].net_dest = new_net_msg_ptr->getDestination();
+            routes[ctr].src_ni = m_id;
+            routes[ctr].src_router = oPort->routerID();
+            routes[ctr].dest_ni = destID;
+            routes[ctr].dest_router = m_net_ptr->get_router_id(destID, vnet);
+
+            // initialize hops_traversed to -1
+            // so that the first router increments it to 0
+            routes[ctr].hops_traversed = -1;
         }
-
-        // Embed Route into the flits
-        // NetDest format is used by the routing table
-        // Custom routing algorithms just need destID
-
-        std::vector<RouteInfo> routes;
-        routes.push_back(RouteInfo());
-        routes[0].vnet = vnet;
-        routes[0].net_dest = new_net_msg_ptr->getDestination();
-        routes[0].src_ni = m_id;
-        routes[0].src_router = oPort->routerID();
-        routes[0].dest_ni = destID;
-        routes[0].dest_router = m_net_ptr->get_router_id(destID, vnet);
-
-        // initialize hops_traversed to -1
-        // so that the first router increments it to 0
-        routes[0].hops_traversed = -1;
 
         m_net_ptr->increment_injected_packets(vnet);
         m_net_ptr->update_traffic_distribution(routes[0]);
@@ -452,6 +458,76 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
         m_ni_out_vcs_enqueue_time[vc] = curTick();
         outVcState[vc].setState(ACTIVE_, curTick());
+    } else {
+        DPRINTF(GarnetMulticast, "Flitisizing message as multiple unicast.\n");
+        // loop to convert all multicast messages into unicast messages
+        for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
+
+            // this will return a free output virtual channel
+            int vc = calculateVC(vnet);
+
+            if (vc == -1) {
+                return false ;
+            }
+            MsgPtr new_msg_ptr = msg_ptr->clone();
+            NodeID destID = dest_nodes[ctr];
+
+            Message *new_net_msg_ptr = new_msg_ptr.get();
+            if (dest_nodes.size() > 1) {
+                NetDest personal_dest;
+                for (int m = 0; m < (int) MachineType_NUM; m++) {
+                    if ((destID >= MachineType_base_number((MachineType) m)) &&
+                        destID < MachineType_base_number((MachineType) (m+1))) {
+                        // calculating the NetDest associated with this destID
+                        personal_dest.clear();
+                        personal_dest.add((MachineID) {(MachineType) m, (destID -
+                            MachineType_base_number((MachineType) m))});
+                        new_net_msg_ptr->getDestination() = personal_dest;
+                        break;
+                    }
+                }
+                net_msg_dest.removeNetDest(personal_dest);
+                // removing the destination from the original message to reflect
+                // that a message with this particular destination has been
+                // flitisized and an output vc is acquired
+                net_msg_ptr->getDestination().removeNetDest(personal_dest);
+            }
+
+            // Embed Route into the flits
+            // NetDest format is used by the routing table
+            // Custom routing algorithms just need destID
+
+            std::vector<RouteInfo> routes;
+            routes.push_back(RouteInfo());
+            routes[0].vnet = vnet;
+            routes[0].net_dest = new_net_msg_ptr->getDestination();
+            routes[0].src_ni = m_id;
+            routes[0].src_router = oPort->routerID();
+            routes[0].dest_ni = destID;
+            routes[0].dest_router = m_net_ptr->get_router_id(destID, vnet);
+
+            // initialize hops_traversed to -1
+            // so that the first router increments it to 0
+            routes[0].hops_traversed = -1;
+
+            m_net_ptr->increment_injected_packets(vnet);
+            m_net_ptr->update_traffic_distribution(routes[0]);
+            int packet_id = m_net_ptr->getNextPacketID();
+            for (int i = 0; i < num_flits; i++) {
+                m_net_ptr->increment_injected_flits(vnet);
+                flit *fl = new flit(packet_id,
+                    i, vc, vnet, routes, num_flits, new_msg_ptr,
+                    m_net_ptr->MessageSizeType_to_int(
+                    net_msg_ptr->getMessageSize()),
+                    oPort->bitWidth(), curTick());
+
+                fl->set_src_delay(curTick() - msg_ptr->getTime());
+                niOutVcs[vc].insert(fl);
+            }
+
+            m_ni_out_vcs_enqueue_time[vc] = curTick();
+            outVcState[vc].setState(ACTIVE_, curTick());
+        }
     }
     return true ;
 }

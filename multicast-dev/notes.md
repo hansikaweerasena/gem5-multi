@@ -1085,3 +1085,56 @@ I'll try using a debugger: https://www.gem5.org/documentation/general_docs/debug
 I used valgrind and figured out that I forgot to initialize the 0th element of a routes vector before attempting set its elements.
 
 It is working again, thankfully.
+
+
+
+## 2023-05-12
+
+### NetworkInterface::flitisizeMessage
+
+I duplicated the for-loop, and wrapped both in an if-else statement based on if multicast is enabled.
+I'll modify the multicast one and once I'm done, I'll see if some of the code can be de-duplicated.
+
+All of the messages sent in the hello-world test program have only one destination,
+so I'll have to find a different program to use.
+
+When I was doing gem5 simulations before, the only benchmarks I could get to run were from MiBench,
+which (as far as I can tell) are not multi-threaded programs.
+Parsec and Splash have multi-threaded programs, but I was unable to get either to run with SE mode.
+I think I was able to get one to run in FS mode, but it was extremely slow waiting for Linux to boot.
+There is a way to set it up to boot using a faster execution mode and switch to a more detailed mode afterwards.
+
+Paper 4 used PARSEC and SPLASH-2.
+
+It looks like gem5 has a script that automatically downloads and runs parsec: https://resources.gem5.org/resources/parsec
+
+Command: ./build/X86/gem5.debug configs/example/gem5_library/x86-parsec-benchmarks.py --benchmark blackscholes --size simsmall
+
+KVM fix: https://www.mail-archive.com/gem5-users@gem5.org/msg20446.html
+
+The simulation seems to work, but it is not using garnet.
+
+
+
+## 2023-05-13
+
+x86-parsec-benchmarks.py appears to make use of the "gem5 stdlib"
+(discussed earlier in these notes).
+
+I can't tell if ds.py offers a way to accelerate linux booting.
+It mentions KVM, but I can't tell if that is what it is being used for.
+
+It seems like it ought to be possible to use the kernel image and parsec binary
+downloaded by x86-parsec-benchmarks.py is fs.py.
+
+
+
+## 2023-05-15
+
+I used the parsec setup instructions Hansika gave me (parsec-setup.pdf)
+and got blacksholes to run.
+
+It runs on my laptop and on gem5 with multiple-unicast.
+It crashes (as expected) on gem5 with multicast.
+
+I can continue with the multicast modifications.
