@@ -69,7 +69,7 @@ SwitchAllocator::init()
 
     for (int i = 0; i < m_num_inports; i++) {
         m_round_robin_invc[i] = 0;
-        m_port_requests[i] = -1;
+        m_port_requests[i] = std::vector<int>();
         m_vc_winners[i] = -1;
     }
 
@@ -121,17 +121,17 @@ SwitchAllocator::arbitrate_inports()
             if (input_unit->need_stage(invc, SA_, curTick())) {
                 // This flit is in SA stage
 
-                int outport = (input_unit->get_outports(invc))[0];
-                int outvc = input_unit->get_outvc(invc);
+                std::vector<int> outports = input_unit->get_outports(invc);
+                std::vector<int> outvcs = input_unit->get_outvcs(invc);
 
                 // check if the flit in this InputVC is allowed to be sent
                 // send_allowed conditions described in that function.
                 bool make_request =
-                    send_allowed(inport, invc, outport, outvc);
+                    send_allowed(inport, invc, outports, outvcs);
 
                 if (make_request) {
                     m_input_arbiter_activity++;
-                    m_port_requests[inport] = outport;
+                    m_port_requests[inport] = outports;
                     m_vc_winners[inport] = invc;
 
                     break; // got one vc winner for this port
@@ -162,6 +162,31 @@ SwitchAllocator::arbitrate_inports()
 void
 SwitchAllocator::arbitrate_outports()
 {
+    std::vector<bool> outport_available(m_num_outports, true);
+
+    int inport = m_round_robin_inport;
+    for (int inport_iter = 0; inport_iter < m_num_inports; inport_iter++) {
+
+        bool requested_outports_available;
+        for (int requested_outport : m_port_requests[inport]) {
+            if (!outport_available[requested_outport])
+                requested_outputs_available = false;
+        }
+
+        if (requested_outports_available) {
+
+        }
+
+        inport++;
+        if (inport >= m_num_inports)
+            inport = 0;
+    }
+
+
+
+
+
+
     // Now there are a set of input vc requests for output vcs.
     // Again do round robin arbitration on these requests
     // Independent arbiter at each output port
@@ -281,55 +306,61 @@ SwitchAllocator::arbitrate_outports()
  */
 
 bool
-SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
+SwitchAllocator::send_allowed(int inport, int invc,
+    std::vector<int> outports, std::vector<int> outvcs)
 {
-    // Check if outvc needed
-    // Check if credit needed (for multi-flit packet)
-    // Check if ordering violated (in ordered vnet)
+    for (int i = 0; i < outports.size(); i++) {
+        // Check if outvc needed
+        // Check if credit needed (for multi-flit packet)
+        // Check if ordering violated (in ordered vnet)
 
-    int vnet = get_vnet(invc);
-    bool has_outvc = (outvc != -1);
-    bool has_credit = false;
+        int vnet = get_vnet(invc);
+        bool has_outvc = (outvcs[i] != -1);
+        bool has_credit = false;
 
-    auto output_unit = m_router->getOutputUnit(outport);
-    if (!has_outvc) {
+        auto output_unit = m_router->getOutputUnit(outports[i]);
+        if (!has_outvc) {
 
-        // needs outvc
-        // this is only true for HEAD and HEAD_TAIL flits.
+            // needs outvc
+            // this is only true for HEAD and HEAD_TAIL flits.
 
-        if (output_unit->has_free_vc(vnet)) {
+            if (output_unit->has_free_vc(vnet)) {
 
-            has_outvc = true;
+                has_outvc = true;
 
-            // each VC has at least one buffer,
-            // so no need for additional credit check
-            has_credit = true;
+                // each VC has at least one buffer,
+                // so no need for additional credit check
+                has_credit = true;
+            }
+        } else {
+            has_credit = output_unit->has_credit(outvcs[i]);
         }
-    } else {
-        has_credit = output_unit->has_credit(outvc);
-    }
 
-    // cannot send if no outvc or no credit.
-    if (!has_outvc || !has_credit)
-        return false;
+        // cannot send if no outvc or no credit.
+        if (!has_outvc || !has_credit)
+            return false;
 
 
-    // protocol ordering check
-    if ((m_router->get_net_ptr())->isVNetOrdered(vnet)) {
-        auto input_unit = m_router->getInputUnit(inport);
+        // protocol ordering check
+        if ((m_router->get_net_ptr())->isVNetOrdered(vnet)) {
+            auto input_unit = m_router->getInputUnit(inport);
 
-        // enqueue time of this flit
-        Tick t_enqueue_time = input_unit->get_enqueue_time(invc);
+            // enqueue time of this flit
+            Tick t_enqueue_time = input_unit->get_enqueue_time(invc);
 
-        // check if any other flit is ready for SA and for same output port
-        // and was enqueued before this flit
-        int vc_base = vnet*m_vc_per_vnet;
-        for (int vc_offset = 0; vc_offset < m_vc_per_vnet; vc_offset++) {
-            int temp_vc = vc_base + vc_offset;
-            if (input_unit->need_stage(temp_vc, SA_, curTick()) &&
-               ((input_unit->get_outports(temp_vc))[0] == outport) &&
-               (input_unit->get_enqueue_time(temp_vc) < t_enqueue_time)) {
-                return false;
+            // check if any other flit is ready for SA and for same output port
+            // and was enqueued before this flit
+            int vc_base = vnet*m_vc_per_vnet;
+            for (int vc_offset = 0; vc_offset < m_vc_per_vnet; vc_offset++) {
+                int temp_vc = vc_base + vc_offset;
+                for (int j = 0; j < temp_vc_outports.size(); j++) {
+                    if (temp_vc_outports[j] == outports[i])
+                        return false;
+                }
+                if (input_unit->need_stage(temp_vc, SA_, curTick()) &&
+                   (input_unit->get_enqueue_time(temp_vc) < t_enqueue_time)) {
+                    return false;
+                }
             }
         }
     }

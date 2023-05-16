@@ -82,9 +82,9 @@ class InputUnit : public Consumer
     }
 
     inline void
-    grant_outvc(int vc, int outvc)
+    grant_outvcs(int vc, std::vector<int> outvcs)
     {
-        virtualChannels[vc].set_outvc(outvc);
+        virtualChannels[vc].set_outvcs(outvcs);
     }
 
     inline std::vector<int>
@@ -93,10 +93,10 @@ class InputUnit : public Consumer
         return virtualChannels[invc].get_outports();
     }
 
-    inline int
-    get_outvc(int invc)
+    inline std::vector<int>
+    get_outvcs(int invc)
     {
-        return virtualChannels[invc].get_outvc();
+        return virtualChannels[invc].get_outvcs();
     }
 
     inline Tick

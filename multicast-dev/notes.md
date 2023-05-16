@@ -1138,3 +1138,100 @@ It runs on my laptop and on gem5 with multiple-unicast.
 It crashes (as expected) on gem5 with multicast.
 
 I can continue with the multicast modifications.
+
+
+
+## 2023-05-16
+
+outportCompute will stay the same.
+It will be called once for each RouteInfo in the packet.
+
+### SwitchAllocator::arbitrate_inports
+
+Relevant section:
+```
+                int outport = (input_unit->get_outports(invc))[0];
+                int outvc = input_unit->get_outvc(invc);
+
+                // check if the flit in this InputVC is allowed to be sent
+                // send_allowed conditions described in that function.
+                bool make_request =
+                    send_allowed(inport, invc, outport, outvc);
+
+                if (make_request) {
+                    m_input_arbiter_activity++;
+                    m_port_requests[inport] = outport;
+                    m_vc_winners[inport] = invc;
+
+                    break; // got one vc winner for this port
+                }
+```
+
+Right now, it is only servicing the first outport in the vector
+(which is obviously not enough).
+
+send_allowed needs to be modified to check a vector of outports.
+m_port_requests needs to store vectors of outports.
+get_outvc needs to be examined.
+
+### SwitchAllocator::send_allowed
+
+Instead of a single outport and outvc,
+it now accepts vectors of outports and outvcs.
+
+It needs to check that send is allowed for every outport-outvc pair
+(paired by index).
+If one is not available, no flits can be forwarded.
+
+I'm not sure what to do with the section labeled "// protocol ordering check".
+I changed it to check every temp_vc outport against the current outport
+(of the main iteration).
+
+### SwitchAllocator::arbitrate_outports
+
+arbitrate_outports goes through each outport and
+services inports' requests for outports.
+
+The issue here is that a single inport will have requests for multiple outports.
+And, an inport needs to be granted all of its needed outports at the same time
+in order to forward flits.
+
+Comment in the code:
+```
+    // Now there are a set of input vc requests for output vcs.
+    // Again do round robin arbitration on these requests
+    // Independent arbiter at each output port
+```
+
+The problem is "Independent arbiter at each output port".
+With this strategy, there is a good chance that input vcs will be granted
+some, but not all, of the outvcs they need.
+When it comes time to service the input vc, garnet will see that it doesn't have
+all of the outvcs needed and will refuse.
+
+If it looped through the inports,
+and on each loop checked for available outports,
+that might work.
+
+The entire function was written with looping through outports in mind,
+so this change is not going to be trivial.
+
+As it is looping through inports,
+it must keep track of which outports have already been granted.
+The outports are numbered consecutively, starting at 0.
+
+The requested outports (for each inport) are stored in a vector.
+
+I'll call the new data structure "outport_available".
+Here are the options:
+- vector of used ones
+- vector of available ones
+- set of used ones
+- set of available ones
+- vector of status flags
+
+The last option seems like the easiest to use and the most efficient.
+
+
+
+
