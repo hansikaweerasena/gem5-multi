@@ -64,7 +64,7 @@ class SwitchAllocator : public Consumer
     void arbitrate_inports();
     void arbitrate_outports();
     bool send_allowed(int inport, int invc, std::vector<int> outports, std::vector<int> outvcs);
-    int vc_allocate(int outport, int inport, int invc);
+    int vc_allocate(std::vector<int> outports, int inport, int invc);
 
     inline double
     get_input_arbiter_activity()
@@ -87,7 +87,7 @@ class SwitchAllocator : public Consumer
 
     Router *m_router;
     std::vector<int> m_round_robin_invc;
-    std::vector<int> m_round_robin_inport;
+    int m_round_robin_inport;
     std::vector<std::vector<int>> m_port_requests;
     std::vector<int> m_vc_winners;
 };

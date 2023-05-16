@@ -57,7 +57,7 @@ class flit
 
     virtual ~flit(){};
 
-    int get_outport() {return m_outport; }
+    std::vector<int> get_outports() { return m_outports; }
     int get_size() { return m_size; }
     Tick get_enqueue_time() { return m_enqueue_time; }
     Tick get_dequeue_time() { return m_dequeue_time; }
@@ -65,7 +65,7 @@ class flit
     int get_id() { return m_id; }
     Tick get_time() { return m_time; }
     int get_vnet() { return m_vnet; }
-    int get_vc() { return m_vc; }
+    std::vector<int> get_vcs() { return m_vcs; }
     RouteInfo get_route(int i) { return m_routes[i]; }
     std::vector<RouteInfo> get_routes() { return m_routes; }
     int get_num_routes() { return m_routes.size(); }
@@ -74,9 +74,9 @@ class flit
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
 
-    void set_outport(int port) { m_outport = port; }
+    void set_outports(std::vector<int> ports) { m_outports = ports; }
     void set_time(Tick time) { m_time = time; }
-    void set_vc(int vc) { m_vc = vc; }
+    void set_vcs(std::vector<int> vcs) { m_vcs = vcs; }
     void set_route(RouteInfo route) { m_routes[0] = route; }
     void set_src_delay(Tick delay) { src_delay = delay; }
     void set_dequeue_time(Tick time) { m_dequeue_time = time; }
@@ -122,14 +122,14 @@ class flit
     int m_packet_id;
     int m_id;
     int m_vnet;
-    int m_vc;
+    std::vector<int> m_vcs;
     std::vector<RouteInfo> m_routes;
     int m_size;
     Tick m_enqueue_time, m_dequeue_time;
     Tick m_time;
     flit_type m_type;
     MsgPtr m_msg_ptr;
-    int m_outport;
+    std::vector<int> m_outports;
     Tick src_delay;
     std::pair<flit_stage, Tick> m_stage;
 };

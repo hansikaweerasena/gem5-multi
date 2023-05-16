@@ -1232,6 +1232,11 @@ Here are the options:
 
 The last option seems like the easiest to use and the most efficient.
 
+(lots of other changes...)
 
+Compile :
+```
+scons ./build/X86/gem5.debug -j 6
+```
 
-
+Need to go through and update calls to get_vc.
