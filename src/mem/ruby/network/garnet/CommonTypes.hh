@@ -72,6 +72,13 @@ struct RouteInfo
     int hops_traversed;
 };
 
+struct OutInfo
+{
+    int outvc;
+    std::vector<RouteInfo> routes;
+};
+
+
 #define INFINITE_ 10000
 
 } // namespace garnet

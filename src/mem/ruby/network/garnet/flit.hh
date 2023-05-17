@@ -47,12 +47,6 @@ namespace ruby
 namespace garnet
 {
 
-struct OutInfo
-{
-    int outvc;
-    std::vector<RouteInfo> routes;
-};
-
 class flit
 {
   public:

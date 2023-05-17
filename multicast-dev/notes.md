@@ -1326,3 +1326,12 @@ I changed VirtualChannel to store an out_info object instead of outvcs and outpo
 I need to update all references to these in other files.
 
 
+## Status
+
+Gem5 is compiling now, and I think the big changes are implemented.
+
+It crashes on the first message sent in hello-se.sh, but I expected this.
+It still has a lot that needs to be cleaned up and debugged.
+
+Next step: start reviewing and cleaning up changes.
+

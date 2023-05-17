@@ -63,8 +63,8 @@ class SwitchAllocator : public Consumer
     void print(std::ostream& out) const {};
     void arbitrate_inports();
     void arbitrate_outports();
-    bool send_allowed(int inport, int invc, std::vector<int> outports, std::vector<int> outvcs);
-    int vc_allocate(std::vector<int> outports, int inport, int invc);
+    bool send_allowed(int inport, int invc, std::vector<OutInfo> out_info);
+    std::vector<OutInfo> vc_allocate(std::vector<OutInfo> out_info, int inport, int invc);
 
     inline double
     get_input_arbiter_activity()
@@ -79,6 +79,9 @@ class SwitchAllocator : public Consumer
 
     void resetStats();
 
+    void reset_outport_availabilities();
+    bool try_claiming_outports(std::vector<OutInfo> requested_out_info);
+
   private:
     int m_num_inports, m_num_outports;
     int m_num_vcs, m_vc_per_vnet;
@@ -88,8 +91,9 @@ class SwitchAllocator : public Consumer
     Router *m_router;
     std::vector<int> m_round_robin_invc;
     int m_round_robin_inport;
-    std::vector<std::vector<int>> m_port_requests;
+    std::vector<std::vector<OutInfo>> m_port_requests;
     std::vector<int> m_vc_winners;
+    std::vector<bool> m_outport_availabilities;
 };
 
 } // namespace garnet

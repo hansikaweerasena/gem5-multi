@@ -97,14 +97,14 @@ InputUnit::wakeup()
             // Route computation for this vc
             std::vector<OutInfo> out_info(m_router->get_num_outports());
             for (RouteInfo route : t_flit->get_routes()) {
-                int outport = m_router->route_compute(route, m_id, m_direction));
+                int outport = m_router->route_compute(route, m_id, m_direction);
                 out_info[outport].routes.push_back(route);
             }
 
             // Update output port in VC
             // All flits in this packet will use this output port
             // The output port field in the flit is updated after it wins SA
-            grant_outports(vc, outports);
+            set_out_info(vc, out_info);
 
         } else {
             assert(virtualChannels[vc].get_state() == ACTIVE_);
