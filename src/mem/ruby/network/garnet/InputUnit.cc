@@ -81,9 +81,10 @@ InputUnit::wakeup()
 
         t_flit = m_in_link->consumeLink();
         DPRINTF(RubyNetwork, "Router[%d] Consuming:%s Width: %d Flit:%s\n",
-        m_router->get_id(), m_in_link->name(),
-        m_router->getBitWidth(), *t_flit);
+            m_router->get_id(), m_in_link->name(),
+            m_router->getBitWidth(), *t_flit);
         assert(t_flit->m_width == m_router->getBitWidth());
+
         int vc = t_flit->get_vc();
         t_flit->increment_hops(); // for stats
 
@@ -94,10 +95,11 @@ InputUnit::wakeup()
             set_vc_active(vc, curTick());
 
             // Route computation for this vc
-            std::vector<int> outports;
-            for (auto route : t_flit->get_routes())
-                outports.push_back(m_router->route_compute(route,
-                    m_id, m_direction));
+            std::vector<OutInfo> out_info(m_router->get_num_outports());
+            for (RouteInfo route : t_flit->get_routes()) {
+                int outport = m_router->route_compute(route, m_id, m_direction));
+                out_info[outport].routes.push_back(route);
+            }
 
             // Update output port in VC
             // All flits in this packet will use this output port

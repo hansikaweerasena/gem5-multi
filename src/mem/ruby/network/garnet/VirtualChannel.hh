@@ -55,10 +55,8 @@ class VirtualChannel
     bool need_stage(flit_stage stage, Tick time);
     void set_idle(Tick curTime);
     void set_active(Tick curTime);
-    void set_outvcs(std::vector<int> outvcs) { m_output_vcs = outvcs; }
-    inline std::vector<int> get_outvcs()     { return m_output_vcs; }
-    void set_outports(std::vector<int> outport) { m_output_ports = outport; };
-    inline std::vector<int> get_outports()  { return m_output_ports; }
+    void set_out_info(std::vector<OutInfo> out_info) { m_out_info = out_info; }
+    inline std::vector<OutInfo> get_out_info()       { return m_out_info; }
 
     inline Tick get_enqueue_time()          { return m_enqueue_time; }
     inline void set_enqueue_time(Tick time) { m_enqueue_time = time; }
@@ -101,13 +99,8 @@ class VirtualChannel
   private:
     flitBuffer inputBuffer;
     std::pair<VC_state_type, Tick> m_vc_state;
-
-    /* the outport at each index corresponds to the destinations of the message
-       sitting in the VC; can contain duplicates */
-    std::vector<int> m_output_ports;
-
+    std::vector<OutInfo> m_out_info;
     Tick m_enqueue_time;
-    std::vector<int> m_output_vcs;
 };
 
 } // namespace garnet

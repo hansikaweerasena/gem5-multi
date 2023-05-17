@@ -76,27 +76,15 @@ class InputUnit : public Consumer
     }
 
     inline void
-    grant_outports(int vc, std::vector<int> outports)
+    set_out_info(int vc, std::vector<OutInfo> out_info)
     {
-        virtualChannels[vc].set_outports(outports);
+        virtualChannels[vc].set_out_info(out_info);
     }
 
-    inline void
-    grant_outvcs(int vc, std::vector<int> outvcs)
+    inline std::vector<OutInfo>
+    get_out_info(int invc)
     {
-        virtualChannels[vc].set_outvcs(outvcs);
-    }
-
-    inline std::vector<int>
-    get_outports(int invc)
-    {
-        return virtualChannels[invc].get_outports();
-    }
-
-    inline std::vector<int>
-    get_outvcs(int invc)
-    {
-        return virtualChannels[invc].get_outvcs();
+        return virtualChannels[invc].get_out_info();
     }
 
     inline Tick

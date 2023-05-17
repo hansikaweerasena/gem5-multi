@@ -1240,3 +1240,89 @@ scons ./build/X86/gem5.debug -j 6
 ```
 
 Need to go through and update calls to get_vc.
+
+
+
+## 2023-05-17
+
+I misunderstood get_vc and set_vc.
+In SwitchAllocator::arbitrate_outports, it says:
+```
+// set outvc (i.e., invc for next hop) in flit
+// (This was updated in VC by vc_allocate, but not in flit)
+t_flit->set_vc(outvc);
+```
+
+A flit can have multiple vcs at this point,
+but by the time it is passed to another router,
+it should have only one vc (the invc for that router).
+
+I just realized that after I compute all of the outports,
+I calculate a new outvc for each of them.
+The problem is that there can be duplicate outports in that list
+(since different destinations can require the same outport),
+but I am requesting unique outvcs each time.
+
+I am using the indexes of the RouteInfo, outport, and outvc vectors
+to keep track of the relations between the three values.
+I don't think this will work.
+Each outport will correspond to only one outvc,
+but multiple RouteInfos can correspond to the same outport.
+
+When a flit comes in to the network interface,
+it can have one invc and several destinations associated with it.
+As the flit progresses through the router,
+outports and outvcs will be assigned,
+and the destinations will be grouped according to those.
+When it comes time to forward the flit,
+the flit will be duplicated so that each new flit has only one vc,
+and then sent along the outport.
+
+In a functional-programming style,
+the "flit" data structure would only contain unchanging information,
+like the original source of the flit,
+the data carried by the flit,
+the size of the flit, etc.
+Other information, like destinations, outports, invc, outvcs,
+would be sent alongside it and swapped out with new information
+as it progresses through the network.
+
+```
+(inport flit
+        (destinations d1 d2 d3 d4 d5)
+        invc1)
+
+(outport1 flit (destinations d1 d2) outvc1)
+(outport2 flit (destinations d3) outvc2)
+(outport3 flit (destinations d4 d5) outvc3)
+```
+
+In gem5-garnet, all of this data (both constant and variable)
+is kept in the flit object so it is easy to pass around and store in buffers.
+
+Here's my idea for modifying the flit class:
+- keep the list of destinations (RouteInfo objects)
+- keep a single vc associated with it (the invc)
+- add an a vector called out_info
+  - out_info is indexed by the outport numbers
+    (which always start at zero for each router).
+  - each element of out_info consists of two items:
+    a single outvc, and a vector of destinations (RouteInfos)
+
+To reduce memory allocation (especially on messages with only one destination),
+the original flit will always be passed along to the first (valid) outport.
+Its list of destinations and invc must be modified, and its out_info cleared.
+
+Each valid out_info element will correspond to a new (or reused) flit.
+The out_info outvc and destinations will become the new flit's invc and destinations.
+
+Define OutInfo struct in flit.hh.
+Add vector of OutInfo to flit class
+(public for now, to avoid getters and setters).
+
+
+
+I changed VirtualChannel to store an out_info object instead of outvcs and outports.
+I need to update all references to these in other files.
+
+

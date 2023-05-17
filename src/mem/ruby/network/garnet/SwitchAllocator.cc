@@ -142,6 +142,30 @@ SwitchAllocator::arbitrate_inports()
     }
 }
 
+
+void
+SwitchAllocator::reset_outport_availabilities()
+{
+    m_outport_availabilities = std::vector<bool>(m_num_outports, true);
+}
+
+/*
+ * If outports are available, claims them and returns true.
+ * Otherwise, makes no changes and returns false.
+ */
+
+bool
+SwitchAllocator::try_claiming_outports(std::vector<int> requested_outports)
+{
+    for (int outport : requested_outports)
+        if (!m_outport_availabilities[outport])
+            return false; // at least one outport is unavailable
+
+    for (int outport : requested_outports)
+        m_outport_availabilities[outport] = false;
+}
+
+
 /*
  * SA-II (or SA-o) loops through all output ports,
  * and selects one input VC (that placed a request during SA-I)
@@ -159,18 +183,15 @@ SwitchAllocator::arbitrate_inports()
 void
 SwitchAllocator::arbitrate_outports()
 {
-    std::vector<bool> outport_availabilities(m_num_outports, true);
+    reset_outport_availabilities();
 
     int inport = m_round_robin_inport;
     for (int inport_iter = 0; inport_iter < m_num_inports; inport_iter++) {
+        std::vector<int> &requested_outports = m_port_requests[inport];
 
-        bool requested_outports_available;
-        for (int requested_outport : m_port_requests[inport]) {
-            if (!outport_availabilities[requested_outport])
-                requested_outports_available = false;
-        }
+        bool successfully_claimed = try_claiming_outports(requested_outports);
 
-        if (requested_outports_available) {
+        if (successfully_claimed) {
             std::vector<OutputUnit*> output_units;
             for (int outport : m_port_requests[inport])
                 output_units.push_back(m_router->getOutputUnit(outport));

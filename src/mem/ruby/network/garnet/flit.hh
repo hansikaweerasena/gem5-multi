@@ -47,6 +47,12 @@ namespace ruby
 namespace garnet
 {
 
+struct OutInfo
+{
+    int outvc;
+    std::vector<RouteInfo> routes;
+};
+
 class flit
 {
   public:
@@ -65,7 +71,7 @@ class flit
     int get_id() { return m_id; }
     Tick get_time() { return m_time; }
     int get_vnet() { return m_vnet; }
-    std::vector<int> get_vcs() { return m_vcs; }
+    int get_vc() { return m_vc; }
     RouteInfo get_route(int i) { return m_routes[i]; }
     std::vector<RouteInfo> get_routes() { return m_routes; }
     int get_num_routes() { return m_routes.size(); }
@@ -76,7 +82,7 @@ class flit
 
     void set_outports(std::vector<int> ports) { m_outports = ports; }
     void set_time(Tick time) { m_time = time; }
-    void set_vcs(std::vector<int> vcs) { m_vcs = vcs; }
+    void set_vc(int vc) { m_vc = vc; }
     void set_route(RouteInfo route) { m_routes[0] = route; }
     void set_src_delay(Tick delay) { src_delay = delay; }
     void set_dequeue_time(Tick time) { m_dequeue_time = time; }
@@ -118,11 +124,13 @@ class flit
 
     uint32_t m_width;
     int msgSize;
+    std::vector<OutInfo> m_out_info; // indexed by outport
+
   protected:
     int m_packet_id;
     int m_id;
     int m_vnet;
-    std::vector<int> m_vcs;
+    int m_vc;
     std::vector<RouteInfo> m_routes;
     int m_size;
     Tick m_enqueue_time, m_dequeue_time;
