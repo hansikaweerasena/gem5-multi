@@ -1341,3 +1341,13 @@ Next step: start reviewing and cleaning up changes.
 
 It might be smart to add a "split" method to the flit class,
 that returns a vector of new flits, with the destinations split accordingly.
+
+### Taking inventory of changes
+
+I can use this command to see every change I made:
+```
+git diff gem5-official/develop HEAD
+```
+
+My plan is to review the changes, remove unnecessary ones, 
+and potentially find some things I forgot to change.
