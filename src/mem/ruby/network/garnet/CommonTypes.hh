@@ -32,6 +32,7 @@
 #define __MEM_RUBY_NETWORK_GARNET_0_COMMONTYPES_HH__
 
 #include "mem/ruby/common/NetDest.hh"
+#include "mem/ruby/slicc_interface/Message.hh"
 
 namespace gem5
 {
@@ -53,20 +54,20 @@ enum link_type { EXT_IN_, EXT_OUT_, INT_, NUM_LINK_TYPES_ };
 enum RoutingAlgorithm { TABLE_ = 0, XY_ = 1, CUSTOM_ = 2,
                         NUM_ROUTING_ALGORITHM_};
 
-struct RouteInfo
+struct DestInfo
 {
-    RouteInfo()
+    DestInfo()
         : vnet(0), src_ni(0), src_router(0), dest_ni(0), dest_router(0),
           hops_traversed(0)
     {}
 
     // destination format for table-based routing
-    int vnet;
+//    int vnet;
     NetDest net_dest;
 
     // src and dest format for topology-specific routing
-    int src_ni;
-    int src_router;
+//    int src_ni;
+//    int src_router;
     int dest_ni;
     int dest_router;
     int hops_traversed;
@@ -74,7 +75,12 @@ struct RouteInfo
 
 struct PacketInfo
 {
-    int id, src_ni, src_router;
+    int id;
+    int src_ni;
+    int src_router;
+    int vnet;
+    MsgPtr msg_ptr;
+    int msg_size;
 };
 
 struct OutInfo

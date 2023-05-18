@@ -42,66 +42,34 @@ namespace gem5 {
 namespace ruby {
 namespace garnet {
 
-class flit
+class Flit
 {
   public:
-    flit() {}
-    flit(int packet_id, int id, int vc, int vnet,
-         std::vector<RouteInfo> routes, int size,
-         MsgPtr msg_ptr, int MsgSize, uint32_t bWidth, Tick curTime);
-
+    Flit(int id, int size, std::vector<DestInfo> dests,
+      PacketInfo packet_info, uint32_t bWidth, Tick curTime);
     virtual ~flit(){};
 
-    int get_size() { return m_size; }
-    Tick get_enqueue_time() { return m_enqueue_time; }
-    Tick get_dequeue_time() { return m_dequeue_time; }
-    int getPacketID() { return m_packet_id; }
+    PacketInfo get_packet_info() { return m_packet_info; }
     int get_id() { return m_id; }
-    Tick get_time() { return m_time; }
-    int get_vnet() { return m_vnet; }
-    int get_vc() { return m_vc; }
-    RouteInfo get_route(int i) { return m_routes[i]; }
-    std::vector<RouteInfo> get_routes() { return m_routes; }
-    int get_num_routes() { return m_routes.size(); }
-    MsgPtr& get_msg_ptr() { return m_msg_ptr; }
+    std::vector<DestInfo> get_dests() { return m_dests; }
+    int get_size() { return m_size; }
     flit_type get_type() { return m_type; }
-    std::pair<flit_stage, Tick> get_stage() { return m_stage; }
-    Tick get_src_delay() { return src_delay; }
-
-    void set_time(Tick time) { m_time = time; }
-    void set_vc(int vc) { m_vc = vc; }
-    void set_route(RouteInfo route) { m_routes[0] = route; }
-    void set_src_delay(Tick delay) { src_delay = delay; }
-    void set_dequeue_time(Tick time) { m_dequeue_time = time; }
-    void set_enqueue_time(Tick time) { m_enqueue_time = time; }
+    bool is_stage(flit_stage stage, Tick time);
+    static bool is_greater(flit* n1, flit* n2);
 
     void increment_hops() { m_routes[0].hops_traversed++; }
+    void advance_stage(flit_stage t_stage, Tick newTime);
+
+    Tick get_enqueue_time() { return m_enqueue_time; }
+    Tick get_dequeue_time() { return m_dequeue_time; }
+    Tick get_time() { return m_time; }
+    Tick get_src_delay() { return src_delay; }
+    void set_enqueue_time(Tick time) { m_enqueue_time = time; }
+    void set_dequeue_time(Tick time) { m_dequeue_time = time; }
+    void set_time(Tick time) { m_time = time; }
+    void set_src_delay(Tick delay) { src_delay = delay; }
+
     virtual void print(std::ostream& out) const;
-
-    bool
-    is_stage(flit_stage stage, Tick time)
-    {
-        return (stage == m_stage.first &&
-                time >= m_stage.second);
-    }
-
-    void
-    advance_stage(flit_stage t_stage, Tick newTime)
-    {
-        m_stage.first = t_stage;
-        m_stage.second = newTime;
-    }
-
-    static bool
-    greater(flit* n1, flit* n2)
-    {
-        if (n1->get_time() == n2->get_time()) {
-            //assert(n1->flit_id != n2->flit_id);
-            return (n1->get_id() > n2->get_id());
-        } else {
-            return (n1->get_time() > n2->get_time());
-        }
-    }
 
     bool functionalRead(Packet *pkt, WriteMask &mask);
     bool functionalWrite(Packet *pkt);
@@ -109,23 +77,46 @@ class flit
     virtual flit* serialize(int ser_id, int parts, uint32_t bWidth);
     virtual flit* deserialize(int des_id, int num_flits, uint32_t bWidth);
 
-    uint32_t m_width;
-    int msgSize;
-    std::vector<OutInfo> m_out_info; // indexed by outport
+/*
+    flit() {}
+    flit(int packet_id, int id, int vc, int vnet,
+         std::vector<RouteInfo> routes, int size,
+         MsgPtr msg_ptr, int MsgSize, uint32_t bWidth, Tick curTime);
+*/
+
+//    std::pair<flit_stage, Tick> get_stage() { return m_stage; }
+//    int getPacketID() { return m_packet_id; }
+//    int get_vnet() { return m_vnet; }
+//    int get_num_routes() { return m_routes.size(); }
+//    MsgPtr& get_msg_ptr() { return m_msg_ptr; }
+//    void set_route(RouteInfo route) { m_routes[0] = route; }
+//    int get_vc() { return m_vc; }
+//    void set_vc(int vc) { m_vc = vc; }
+
+
+//    int msgSize;
+//    std::vector<OutInfo> m_out_info; // indexed by outport
 
   protected:
-    int m_packet_id;
     int m_id;
-    int m_vnet;
-    int m_vc;
-    std::vector<RouteInfo> m_routes;
     int m_size;
-    Tick m_enqueue_time, m_dequeue_time;
-    Tick m_time;
+    PacketInfo m_packet_info;
+    std::vector<DestInfo> m_dests;
+    uint32_t m_width;
     flit_type m_type;
-    MsgPtr m_msg_ptr;
-    Tick src_delay;
+
     std::pair<flit_stage, Tick> m_stage;
+
+    Tick m_enqueue_time;
+    Tick m_dequeue_time;
+    Tick m_time;
+    Tick src_delay;
+
+//    MsgPtr m_msg_ptr;
+//    int m_vnet;
+//    int m_packet_id;
+//    int m_vc;
+
 };
 
 inline std::ostream&

@@ -127,6 +127,32 @@ flit::print(std::ostream& out) const
 }
 
 bool
+flit::is_stage(flit_stage stage, Tick time)
+{
+    return (stage == m_stage.first &&
+    time >= m_stage.second);
+}
+
+void
+flit::advance_stage(flit_stage t_stage, Tick newTime)
+{
+    m_stage.first = t_stage;
+    m_stage.second = newTime;
+}
+
+static bool
+flit::is_greater(flit* n1, flit* n2)
+{
+    if (n1->get_time() == n2->get_time()) {
+        //assert(n1->flit_id != n2->flit_id);
+        return (n1->get_id() > n2->get_id());
+    } else {
+        return (n1->get_time() > n2->get_time());
+    }
+}
+
+
+bool
 flit::functionalRead(Packet *pkt, WriteMask &mask)
 {
     Message *msg = m_msg_ptr.get();
