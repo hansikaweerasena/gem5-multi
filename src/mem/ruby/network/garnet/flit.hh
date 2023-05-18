@@ -38,14 +38,9 @@
 #include "mem/ruby/network/garnet/CommonTypes.hh"
 #include "mem/ruby/slicc_interface/Message.hh"
 
-namespace gem5
-{
-
-namespace ruby
-{
-
-namespace garnet
-{
+namespace gem5 {
+namespace ruby {
+namespace garnet {
 
 class flit
 {
@@ -57,7 +52,6 @@ class flit
 
     virtual ~flit(){};
 
-    std::vector<int> get_outports() { return m_outports; }
     int get_size() { return m_size; }
     Tick get_enqueue_time() { return m_enqueue_time; }
     Tick get_dequeue_time() { return m_dequeue_time; }
@@ -74,7 +68,6 @@ class flit
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
 
-    void set_outports(std::vector<int> ports) { m_outports = ports; }
     void set_time(Tick time) { m_time = time; }
     void set_vc(int vc) { m_vc = vc; }
     void set_route(RouteInfo route) { m_routes[0] = route; }
@@ -131,7 +124,6 @@ class flit
     Tick m_time;
     flit_type m_type;
     MsgPtr m_msg_ptr;
-    std::vector<int> m_outports;
     Tick src_delay;
     std::pair<flit_stage, Tick> m_stage;
 };

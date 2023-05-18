@@ -1335,3 +1335,9 @@ It still has a lot that needs to be cleaned up and debugged.
 
 Next step: start reviewing and cleaning up changes.
 
+
+
+## 2023-05-18
+
+It might be smart to add a "split" method to the flit class,
+that returns a vector of new flits, with the destinations split accordingly.

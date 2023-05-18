@@ -72,6 +72,11 @@ struct RouteInfo
     int hops_traversed;
 };
 
+struct PacketInfo
+{
+    int id, src_ni, src_router;
+};
+
 struct OutInfo
 {
     int outvc;

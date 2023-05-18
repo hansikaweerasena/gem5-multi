@@ -65,14 +65,14 @@ CrossbarSwitch::init()
 void
 CrossbarSwitch::wakeup()
 {
-    DPRINTF(RubyNetwork, "CrossbarSwitch at Router %d woke up "
-            "at time: %lld\n",
-            m_router->get_id(), m_router->curCycle());
+    DPRINTF(RubyNetwork,
+      "CrossbarSwitch at Router %d woke up at time: %lld\n",
+      m_router->get_id(),
+      m_router->curCycle());
 
     for (auto& switch_buffer : switchBuffers) {
-        if (!switch_buffer.isReady(curTick())) {
+        if (!switch_buffer.isReady(curTick()))
             continue;
-        }
 
         flit *t_flit = switch_buffer.peekTopFlit();
         if (t_flit->is_stage(ST_, curTick())) {
@@ -101,10 +101,9 @@ CrossbarSwitch::wakeup()
                 // This will take care of waking up the Network Link
                 // in the next cycle
                 m_router->getOutputUnit(outport)->insert_flit(t_flit_dup);
-                switch_buffer.getTopFlit();
                 m_crossbar_activity++;
             }
-            delete t_flit;
+            switch_buffer.getTopFlit();
         }
     }
 }
