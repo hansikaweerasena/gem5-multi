@@ -1349,7 +1349,7 @@ I can use this command to see every change I made:
 git diff gem5-official/develop HEAD
 ```
 
-My plan is to review the changes, remove unnecessary ones, 
+My plan is to review the changes, remove unnecessary ones,
 and potentially find some things I forgot to change.
 
 
