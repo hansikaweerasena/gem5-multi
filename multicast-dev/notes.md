@@ -1351,3 +1351,15 @@ git diff gem5-official/develop HEAD
 
 My plan is to review the changes, remove unnecessary ones, 
 and potentially find some things I forgot to change.
+
+
+
+## 2023-05-19
+
+[ ] Fix NetworkInterface::incrementStats
+[ ] Fix call to GarnetNetwork::update_traffic_distribution
+[ ] Add comments back to SwitchAllocator::arbitrate_outports
+[ ] Review SwitchAllocator::arbitrate_outports logic
+[ ] Update flit print procedure
+[ ] Fix increment_hops
+

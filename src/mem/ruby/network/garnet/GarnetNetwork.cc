@@ -77,8 +77,8 @@ GarnetNetwork::GarnetNetwork(const Params &p)
     if (m_enable_multicast)
         DPRINTF(GarnetMulticast, "Multicast enabled.\n");
     else
-        DPRINTF(GarnetMulticast, "Multicast not enabled."
-            " Using multiple-unicast instead.\n");
+        DPRINTF(GarnetMulticast, "Multicast not enabled. "
+                "Using multiple-unicast instead.\n");
 
     m_enable_fault_model = p.enable_fault_model;
     if (m_enable_fault_model)

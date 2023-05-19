@@ -38,9 +38,14 @@
 #include "mem/ruby/network/garnet/CommonTypes.hh"
 #include "mem/ruby/slicc_interface/Message.hh"
 
-namespace gem5 {
-namespace ruby {
-namespace garnet {
+namespace gem5
+{
+
+namespace ruby
+{
+
+namespace garnet
+{
 
 class flit
 {
