@@ -191,6 +191,9 @@ SwitchAllocator::arbitrate_outports()
     for (int inport_iter = 0; inport_iter < m_num_inports; inport_iter++) {
         std::vector<OutInfo> &requested_out_info = m_port_requests[inport];
 
+	if (requested_out_info.size() == 0)
+	    continue;
+	
         bool successfully_claimed = try_claiming_outports(requested_out_info);
 
         if (successfully_claimed) {

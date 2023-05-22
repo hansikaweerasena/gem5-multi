@@ -74,6 +74,11 @@ struct RouteInfo
 
 struct OutInfo
 {
+    OutInfo() {
+	routes = std::vector<RouteInfo>();
+	outvc = -1;
+    }
+    
     int outvc;
     std::vector<RouteInfo> routes;
 };

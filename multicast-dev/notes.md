@@ -1080,7 +1080,8 @@ My guess is that there is python code using flits that isn't being checked at co
 I am going to recompile with gem5.debug and see if the backtrace is more descriptive.
 
 Same backtrace as before.
-I'll try using a debugger: https://www.gem5.org/documentation/general_docs/debugging_and_testing/debugging/debugger_based_debugging
+I'll try using a debugger:
+https://www.gem5.org/documentation/general_docs/debugging_and_testing/debugging/debugger_based_debugging
 
 I used valgrind and figured out that I forgot to initialize the 0th element of a routes vector before attempting set its elements.
 
@@ -1363,3 +1364,89 @@ and potentially find some things I forgot to change.
 [ ] Update flit print procedure
 [ ] Fix increment_hops
 
+For valgrind:
+```
+scons --without-tcmalloc ./build/X86/gem5.debug -j 6
+```
+
+
+## 2023-05-22
+
+After running the simulation with Valgrind, the first error was:
+```
+   1500: system.ruby.network.netifs00: Flitisizing message as multicast. Num Destinations: 1.
+==8680== Use of uninitialised value of size 8
+==8680==    at 0x1AC24B4: gem5::ruby::garnet::flitBuffer::getTopFlit() (flitBuffer.hh:66)
+==8680==    by 0x1ADE3BF: gem5::ruby::garnet::VirtualChannel::getTopFlit() (VirtualChannel.hh:93)
+==8680==    by 0x1ADE4B1: gem5::ruby::garnet::InputUnit::getTopFlit(int) (InputUnit.hh:107)
+==8680==    by 0x1ADD692: gem5::ruby::garnet::SwitchAllocator::arbitrate_outports() (SwitchAllocator.cc:202)
+==8680==    by 0x1ADD1A7: gem5::ruby::garnet::SwitchAllocator::wakeup() (SwitchAllocator.cc:91)
+==8680==    by 0x1AD6FBC: gem5::ruby::garnet::Router::wakeup() (Router.cc:93)
+==8680==    by 0x190FA48: gem5::ruby::Consumer::processCurrentEvent() (Consumer.cc:94)
+==8680==    by 0x190F5D8: gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}::operator()() const (Consumer.cc:50)
+==8680==    by 0x190FDA9: void std::__invoke_impl<void, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&>(std::__invoke_other, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&) (invoke.h:60)
+==8680==    by 0x190FC99: std::enable_if<is_invocable_r_v<void, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&>, std::enable_if>::type std::__invoke_r<void, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&>(void&&, (gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&)...) (invoke.h:110)
+==8680==    by 0x190FB8B: std::_Function_handler<void (), gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}>::_M_invoke(std::_Any_data const&) (std_function.h:291)
+==8680==    by 0x372991: std::function<void ()>::operator()() const (std_function.h:622)
+==8680== 
+```
+
+Issue: not checking if inport has a flit waiting in it before getting flit.
+Fixed
+
+
+Next issue:
+```
+==9913== Conditional jump or move depends on uninitialised value(s)
+==9913==    at 0xEEE038: void gem5::statistics::ScalarProxy<gem5::statistics::Vector>::operator+=<unsigned long>(unsigned long const&) (statistics.hh:887)
+==9913==    by 0x1ACE6AE: gem5::ruby::garnet::GarnetNetwork::increment_flit_queueing_latency(unsigned long, int) (GarnetNetwork.hh:149)
+==9913==    by 0x1ACA0D9: gem5::ruby::garnet::NetworkInterface::incrementStats(gem5::ruby::garnet::flit*) (NetworkInterface.cc:169)
+==9913==    by 0x1ACAB01: gem5::ruby::garnet::NetworkInterface::wakeup() (NetworkInterface.cc:256)
+```
+
+The issue seems to be in this line:
+```
+    m_net_ptr->increment_flit_queueing_latency(queueing_delay, vnet);
+```
+Something is uninitialized.
+
+`m_net_ptr->increment_packet_queueing_latency(queueing_delay, vnet);`
+was also flaged by Valgrind.
+I think the issue is queueing_delay.
+
+These aren't causing gem5 to crash though.
+Here is the main issue:
+```
+gem5.debug: build/X86/mem/ruby/network/garnet/OutputUnit.cc:91: bool gem5::ruby::garnet::OutputUnit::has_credit(int): Assertion `outVcState[out_vc].isInState(ACTIVE_, curTick())' failed.
+```
+and
+```==9913== Process terminating with default action of signal 6 (SIGABRT)
+==9913==    at 0x4E04F44: pthread_kill (pthread_kill.c:57)
+==9913==    by 0xEB24F0: gem5::raiseFatalSignal(int) (init_signals.cc:106)
+==9913==    by 0xEB2637: gem5::abortHandler(int) (init_signals.cc:157)
+==9913==    by 0x4E0813F: ??? (in /usr/lib/x86_64-linux-gnu/libpthread-2.31.so)
+==9913==    by 0x54FFCE0: __libc_signal_restore_set (internal-signals.h:86)
+==9913==    by 0x54FFCE0: raise (raise.c:48)
+==9913==    by 0x54E9536: abort (abort.c:79)
+==9913==    by 0x54E940E: __assert_fail_base.cold (assert.c:92)
+==9913==    by 0x54F8661: __assert_fail (assert.c:101)
+==9913==    by 0x1AD5CAB: gem5::ruby::garnet::OutputUnit::has_credit(int) (OutputUnit.cc:91)
+==9913==    by 0x1ADDBED: gem5::ruby::garnet::SwitchAllocator::send_allowed(int, int, std::vector<gem5::ruby::garnet::OutInfo, std::allocator<gem5::ruby::garnet::OutInfo> >) (SwitchAllocator.cc:414)
+==9913==    by 0x1ADD2A6: gem5::ruby::garnet::SwitchAllocator::arbitrate_inports() (SwitchAllocator.cc:125)
+==9913==    by 0x1ADD19B: gem5::ruby::garnet::SwitchAllocator::wakeup() (SwitchAllocator.cc:90)
+==9913== 
+```
+
+The issue seems to be from when send_allowed calls has_credit.
+Send_allowed is apparently calling has_credit on a non-ACTIVE outvc.
+
+I think I forgot to initialize the outvc values in out_info to -1.
+The junk value is getting past the check for a valid outvc.
+
+After that fix, hello-se.sh is now running properly.
+
+parsec-se.sh crashes due to:
+```
+gem5.debug: build/X86/mem/ruby/network/garnet/OutVcState.cc:77: void gem5::ruby::garnet::OutVcState::decrement_credit(): Assertion `m_credit_count >= 0' failed.
+```
+It looks like SwitchAllocator::arbitrate_outports called decrement_credit.
