@@ -32,6 +32,7 @@
 #include "mem/ruby/network/garnet/SwitchAllocator.hh"
 
 #include "debug/RubyNetwork.hh"
+#include "debug/GarnetMulticast.hh"
 #include "mem/ruby/network/garnet/GarnetNetwork.hh"
 #include "mem/ruby/network/garnet/InputUnit.hh"
 #include "mem/ruby/network/garnet/OutputUnit.hh"
@@ -211,9 +212,11 @@ SwitchAllocator::arbitrate_outports()
             t_flit->m_out_info = out_info;
 
             for (int outport = 0; outport < out_info.size(); outport++)
-                if (out_info[outport].routes.size() > 0)
+                if (out_info[outport].routes.size() > 0) {
+		    DPRINTF(GarnetMulticast, "Decrement credit. router=%d, invc=%d outport=%d, outvc=%d)\n", m_router->get_id(), invc, outport, out_info[outport].outvc);
                     m_router->getOutputUnit(outport)->
                         decrement_credit(out_info[outport].outvc);
+		}
 
             t_flit->advance_stage(ST_, curTick());
             m_router->grant_switch(inport, t_flit);
@@ -431,12 +434,11 @@ SwitchAllocator::send_allowed(int inport, int invc,
             int vc_base = vnet*m_vc_per_vnet;
             for (int vc_offset = 0; vc_offset < m_vc_per_vnet; vc_offset++) {
                 int temp_vc = vc_base + vc_offset;
-                /* need to fix
-                for (int j = 0; j < temp_vc_outports.size(); j++) {
-                    if (temp_vc_outports[j] == outports[i])
+                for (int j = 0; j < out_info.size(); j++) {
+                    if (out_info[j].routes.size() > 0 &&
+			out_info[j].outvc == temp_vc)
                         return false;
                 }
-                */
                 if (input_unit->need_stage(temp_vc, SA_, curTick()) &&
                    (input_unit->get_enqueue_time(temp_vc) < t_enqueue_time)) {
                     return false;

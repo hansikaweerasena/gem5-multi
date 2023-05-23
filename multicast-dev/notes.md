@@ -1450,3 +1450,13 @@ parsec-se.sh crashes due to:
 gem5.debug: build/X86/mem/ruby/network/garnet/OutVcState.cc:77: void gem5::ruby::garnet::OutVcState::decrement_credit(): Assertion `m_credit_count >= 0' failed.
 ```
 It looks like SwitchAllocator::arbitrate_outports called decrement_credit.
+
+
+
+## 2023-05-23
+
+There are still a few occurances of when I replaced `route` with `routes[0]`
+
+I have no idea what is causing the decrement_credit issue.
+Either something is not being incremented when it should,
+or something is being decremented when it shouldn't.
