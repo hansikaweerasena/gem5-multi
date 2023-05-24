@@ -119,8 +119,10 @@ flit::print(std::ostream& out) const
     out << "VC=" << m_vc << " ";
     out << "Src NI=" << m_routes[0].src_ni << " ";
     out << "Src Router=" << m_routes[0].src_router << " ";
-    out << "Dest NI=" << m_routes[0].dest_ni << " ";
-    out << "Dest Router=" << m_routes[0].dest_router << " ";
+    out << "Dest NIs=";
+    for (auto r : m_routes) out << r.dest_ni << " ";
+    out << "Dest Routers=";
+    for (auto r : m_routes) out << r.dest_router << " ";
     out << "Set Time=" << m_time << " ";
     out << "Width=" << m_width<< " ";
     out << "]";

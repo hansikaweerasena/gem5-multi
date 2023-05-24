@@ -212,8 +212,7 @@ SwitchAllocator::arbitrate_outports()
             t_flit->m_out_info = out_info;
 
             for (int outport = 0; outport < out_info.size(); outport++)
-                if (out_info[outport].routes.size() > 0) {
-		    DPRINTF(GarnetMulticast, "Decrement credit. router=%d, invc=%d outport=%d, outvc=%d)\n", m_router->get_id(), invc, outport, out_info[outport].outvc);
+                if (out_info[outport].outvc != -1) {
                     m_router->getOutputUnit(outport)->
                         decrement_credit(out_info[outport].outvc);
 		}

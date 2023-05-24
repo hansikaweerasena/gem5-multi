@@ -1460,3 +1460,9 @@ There are still a few occurances of when I replaced `route` with `routes[0]`
 I have no idea what is causing the decrement_credit issue.
 Either something is not being incremented when it should,
 or something is being decremented when it shouldn't.
+
+Earlier, I changed the code so that the outgoing vc is not stored in the vc variable
+of the flit.
+Could some part of the code be calling get_vc(),
+expecting it to be the outvc,
+and adjusting credits accordingly?
