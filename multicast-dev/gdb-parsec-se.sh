@@ -1,5 +1,5 @@
-../build/X86/gem5.debug \
-    --debug-break=2673000 \
+gdb --args ../build/X86/gem5.debug \
+    --debug-break=12373000 \
     --stats-file=parsec-se-stats.txt \
     --debug-flags='GarnetMulticast' \
     ../configs/deprecated/example/se.py \
@@ -20,4 +20,3 @@
     --cmd=../../parsec-benchmark/pkgs/apps/blackscholes/inst/amd64-linux.gcc/bin/blackscholes \
     --options="4 ../../parsec-benchmark/pkgs/apps/blackscholes/run/in_4.txt prices.txt" \
     --multicast \
-

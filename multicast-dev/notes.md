@@ -1466,3 +1466,45 @@ of the flit.
 Could some part of the code be calling get_vc(),
 expecting it to be the outvc,
 and adjusting credits accordingly?
+
+Try a different benchmark or synthetic traffic.
+Is it an issue with the blackscholes benchmark, or is it an issue with the code?
+Try synthetic traffic.
+
+
+
+## 2023-05-25
+
+I commented out the asserts, and blackscholes ran for quite a while before
+crashing on something else.
+
+I'll add the asserts back in and start testing with synthetic traffic.
+
+```
+scons build/NULL/gem5.debug PROTOCOL=Garnet_standalone -j 6
+```
+
+
+
+## 2023-05-26
+
+Running synthetic.sh:
+```
+2673000: global: Router[12] Consuming:system.ruby.network.ext_links12.network_links0 Width: 16 Flit:[flit:: PacketId=1 Id=1 Type=1 Size=5 Vnet=2 VC=8 Src NI=12 Src Router=12 Dest NIs=20 Dest Routers=4 Set Time=2673000 Width=16 ]
+2673000: global: Router 12 OutputUnit South decrementing credit:4 for outvc 8 at time: 5346 for system.ruby.network.int_links38.credit_link
+...
+2679000: global: Router 12 OutputUnit South decrementing credit:0 for outvc 8 at time: 5358 for system.ruby.network.int_links38.credit_link
+gem5.debug: build/NULL/mem/ruby/network/garnet/OutVcState.cc:77: void gem5::ruby::garnet::OutVcState::decrement_credit(): Assertion `m_credit_count >= 0' failed.
+```
+
+It sort of looks like a packet with 5 flits is being put into an outvc with room
+for 4 flits.
+
+`--debug-break=2673000`
+
+
+
+At this point, I have no idea what is causing this bug.
+I am going to try running the parsec benchmark on an unmodified version of gem5
+(with RubyNetwork debug printing enabled).
+I will compare the output to the same from the currently modified version.

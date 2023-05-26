@@ -213,6 +213,7 @@ SwitchAllocator::arbitrate_outports()
 
             for (int outport = 0; outport < out_info.size(); outport++)
                 if (out_info[outport].outvc != -1) {
+		    //std::cout << "[DEBUG]" << *t_flit << std::endl;
                     m_router->getOutputUnit(outport)->
                         decrement_credit(out_info[outport].outvc);
 		}
