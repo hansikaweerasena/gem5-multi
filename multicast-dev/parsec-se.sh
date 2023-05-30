@@ -1,7 +1,6 @@
 ../build/X86/gem5.debug \
-    --debug-break=2673000 \
     --stats-file=parsec-se-stats.txt \
-    --debug-flags='GarnetMulticast' \
+    --debug-flags='RubyNetwork' \
     ../configs/deprecated/example/se.py \
     --ruby \
     --network=garnet \
