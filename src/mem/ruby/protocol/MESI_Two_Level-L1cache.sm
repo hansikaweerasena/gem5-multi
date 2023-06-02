@@ -428,7 +428,8 @@ machine(MachineType:L1Cache, "MESI Directory L1 Cache CMP")
   in_port(requestL1Network_in, RequestMsg, requestToL1Cache, rank = 1) {
     if(requestL1Network_in.isReady(clockEdge())) {
       peek(requestL1Network_in, RequestMsg, block_on="addr") {
-        assert(in_msg.Destination.isElement(machineID));
+      DPRINTF(RubySlicc, "Multicast debug: machineID=%s, destination=%s\n", machineID, in_msg.Destination);
+      assert(in_msg.Destination.isElement(machineID));
 
         Entry cache_entry := getCacheEntry(in_msg.addr);
         TBE tbe := TBEs[in_msg.addr];

@@ -390,8 +390,9 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         DPRINTF(GarnetMulticast, "Flitisizing message as multicast. "
             "Num Destinations: %d.\n", dest_nodes.size());
 
-        std::vector<RouteInfo> routes(dest_nodes.size(), RouteInfo());
-
+        std::vector<RouteInfo> routes(dest_nodes.size());
+	std::vector<MsgPtr> new_msg_ptrs(dest_nodes.size());
+	
         // this will return a free output virtual channel
         int vc = calculateVC(vnet);
 
@@ -399,13 +400,12 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             return false ;
         }
 
-        MsgPtr new_msg_ptr = msg_ptr->clone();
 
         for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
-
+	    MsgPtr new_msg_ptr = msg_ptr->clone();
             NodeID destID = dest_nodes[ctr];
-
             Message *new_net_msg_ptr = new_msg_ptr.get();
+
             if (dest_nodes.size() > 1) {
                 NetDest personal_dest;
                 for (int m = 0; m < (int) MachineType_NUM; m++) {
@@ -436,6 +436,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             routes[ctr].dest_ni = destID;
             routes[ctr].dest_router = m_net_ptr->get_router_id(destID, vnet);
 
+	    new_msg_ptrs[ctr] = new_msg_ptr;
+	    
             // initialize hops_traversed to -1
             // so that the first router increments it to 0
             routes[ctr].hops_traversed = -1;
@@ -448,7 +450,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
             flit *fl = new flit(packet_id,
-                i, vc, vnet, routes, num_flits, new_msg_ptr,
+                i, vc, vnet, routes, num_flits, new_msg_ptrs,
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
                 oPort->bitWidth(), curTick());
@@ -498,8 +500,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             // NetDest format is used by the routing table
             // Custom routing algorithms just need destID
 
-            std::vector<RouteInfo> routes;
-            routes.push_back(RouteInfo());
+            std::vector<RouteInfo> routes(1);
             routes[0].vnet = vnet;
             routes[0].net_dest = new_net_msg_ptr->getDestination();
             routes[0].src_ni = m_id;
@@ -507,6 +508,9 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             routes[0].dest_ni = destID;
             routes[0].dest_router = m_net_ptr->get_router_id(destID, vnet);
 
+	    std::vector<MsgPtr> new_msg_ptrs(1);
+	    new_msg_ptrs[0] = new_msg_ptr;
+	    
             // initialize hops_traversed to -1
             // so that the first router increments it to 0
             routes[0].hops_traversed = -1;
@@ -517,7 +521,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             for (int i = 0; i < num_flits; i++) {
                 m_net_ptr->increment_injected_flits(vnet);
                 flit *fl = new flit(packet_id,
-                    i, vc, vnet, routes, num_flits, new_msg_ptr,
+                    i, vc, vnet, routes, num_flits, new_msg_ptrs,
                     m_net_ptr->MessageSizeType_to_int(
                     net_msg_ptr->getMessageSize()),
                     oPort->bitWidth(), curTick());

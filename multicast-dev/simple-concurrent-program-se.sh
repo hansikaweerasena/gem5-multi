@@ -1,5 +1,6 @@
 ../build/X86/gem5.debug \
-    --stats-file=parsec-se-stats.txt \
+    --stats-file=simple-concurrent-program-se-stats.txt \
+    --debug-flags='GarnetMulticast' \
     ../configs/deprecated/example/se.py \
     --ruby \
     --network=garnet \
@@ -15,6 +16,5 @@
     --mesh-rows=4 \
     --cpu-clock=2GHz \
     --mem-size=4GB \
-    --cmd=../../parsec-benchmark/pkgs/apps/blackscholes/inst/amd64-linux.gcc/bin/blackscholes \
-    --options="4 ../../parsec-benchmark/pkgs/apps/blackscholes/run/in_4.txt prices.txt" \
+    --cmd=../../simple-concurrent-program/a.out \
     --multicast \

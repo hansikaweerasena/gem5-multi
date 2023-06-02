@@ -89,7 +89,7 @@ CrossbarSwitch::wakeup()
                     t_flit->get_vnet(),
                     out_info[outport].routes,
                     t_flit->get_size(),
-                    t_flit->get_msg_ptr(),
+                    out_info[outport].msg_ptrs,
                     t_flit->msgSize,
                     t_flit->m_width,
                     t_flit->get_stage().second);

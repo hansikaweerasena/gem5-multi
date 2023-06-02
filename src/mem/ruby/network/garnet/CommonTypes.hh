@@ -32,6 +32,7 @@
 #define __MEM_RUBY_NETWORK_GARNET_0_COMMONTYPES_HH__
 
 #include "mem/ruby/common/NetDest.hh"
+#include "mem/ruby/slicc_interface/Message.hh"
 
 namespace gem5
 {
@@ -74,13 +75,16 @@ struct RouteInfo
 
 struct OutInfo
 {
-    OutInfo() {
-	routes = std::vector<RouteInfo>();
+    OutInfo()
+    {
 	outvc = -1;
+	routes = std::vector<RouteInfo>();
+	msg_ptrs = std::vector<MsgPtr>();
     }
     
     int outvc;
     std::vector<RouteInfo> routes;
+    std::vector<MsgPtr> msg_ptrs;
 };
 
 

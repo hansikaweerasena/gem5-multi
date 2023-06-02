@@ -53,7 +53,8 @@ class flit
     flit() {}
     flit(int packet_id, int id, int vc, int vnet,
          std::vector<RouteInfo> routes, int size,
-         MsgPtr msg_ptr, int MsgSize, uint32_t bWidth, Tick curTime);
+         std::vector<MsgPtr> msg_ptrs, int MsgSize,
+	 uint32_t bWidth, Tick curTime);
 
     virtual ~flit(){};
 
@@ -68,7 +69,8 @@ class flit
     RouteInfo get_route(int i) { return m_routes[i]; }
     std::vector<RouteInfo> get_routes() { return m_routes; }
     int get_num_routes() { return m_routes.size(); }
-    MsgPtr& get_msg_ptr() { return m_msg_ptr; }
+    MsgPtr& get_msg_ptr() { return m_msg_ptrs[0]; }
+    std::vector<MsgPtr>& get_msg_ptrs() { return m_msg_ptrs; }
     flit_type get_type() { return m_type; }
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
@@ -127,7 +129,7 @@ class flit
     Tick m_enqueue_time, m_dequeue_time;
     Tick m_time;
     flit_type m_type;
-    MsgPtr m_msg_ptr;
+    std::vector<MsgPtr> m_msg_ptrs;
     Tick src_delay;
     std::pair<flit_stage, Tick> m_stage;
 };

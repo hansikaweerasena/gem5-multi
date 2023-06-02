@@ -45,10 +45,10 @@ namespace garnet
 // Constructor for the flit
 flit::flit(int packet_id, int id, int  vc, int vnet,
     std::vector<RouteInfo> routes, int size,
-    MsgPtr msg_ptr, int MsgSize, uint32_t bWidth, Tick curTime)
+    std::vector<MsgPtr> msg_ptrs, int MsgSize, uint32_t bWidth, Tick curTime)
 {
     m_size = size;
-    m_msg_ptr = msg_ptr;
+    m_msg_ptrs = msg_ptrs;
     m_enqueue_time = curTime;
     m_dequeue_time = curTime;
     m_time = curTime;
@@ -85,7 +85,7 @@ flit::serialize(int ser_id, int parts, uint32_t bWidth)
     assert(new_id < new_size);
 
     flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_routes,
-                    new_size, m_msg_ptr, msgSize, bWidth, m_time);
+                    new_size, m_msg_ptrs, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
     return fl;
@@ -100,7 +100,7 @@ flit::deserialize(int des_id, int num_flits, uint32_t bWidth)
     assert(new_id < new_size);
 
     flit *fl = new flit(m_packet_id, new_id, m_vc, m_vnet, m_routes,
-                    new_size, m_msg_ptr, msgSize, bWidth, m_time);
+                    new_size, m_msg_ptrs, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
     return fl;
@@ -131,14 +131,15 @@ flit::print(std::ostream& out) const
 bool
 flit::functionalRead(Packet *pkt, WriteMask &mask)
 {
-    Message *msg = m_msg_ptr.get();
+    Message *msg = m_msg_ptrs[0].get();
+    /* the [0] is a hack; all msg_ptrs need to be accounted for */
     return msg->functionalRead(pkt, mask);
 }
 
 bool
 flit::functionalWrite(Packet *pkt)
 {
-    Message *msg = m_msg_ptr.get();
+    Message *msg = m_msg_ptrs[0].get();
     return msg->functionalWrite(pkt);
 }
 

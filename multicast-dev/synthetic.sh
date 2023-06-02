@@ -8,8 +8,6 @@
 	--topology=Mesh_XY \
 	--mesh-rows=4 \
 	--multicast \
-	--sim-cycles=1000000000 \
+	--sim-cycles=1000000 \
 	--synthetic=uniform_random \
-	--injectionrate=0.01 \
-	--debug-break=2673000 \
-	
+	--injectionrate=0.05 \

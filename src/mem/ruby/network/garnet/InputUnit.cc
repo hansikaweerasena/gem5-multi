@@ -96,9 +96,12 @@ InputUnit::wakeup()
 
             // Route computation for this vc
             std::vector<OutInfo> out_info(m_router->get_num_outports());
-            for (RouteInfo route : t_flit->get_routes()) {
-                int outport = m_router->route_compute(route, m_id, m_direction);
-                out_info[outport].routes.push_back(route);
+	    auto routes = t_flit->get_routes();
+	    auto msg_ptrs = t_flit->get_msg_ptrs();
+            for (int i = 0; i < routes.size(); i++) {
+                int outport = m_router->route_compute(routes[i], m_id, m_direction);
+                out_info[outport].routes.push_back(routes[i]);
+		out_info[outport].msg_ptrs.push_back(msg_ptrs[i]);
             }
 
             // Update output port in VC

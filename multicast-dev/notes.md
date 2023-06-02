@@ -1388,7 +1388,7 @@ After running the simulation with Valgrind, the first error was:
 ==8680==    by 0x190FC99: std::enable_if<is_invocable_r_v<void, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&>, std::enable_if>::type std::__invoke_r<void, gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&>(void&&, (gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}&)...) (invoke.h:110)
 ==8680==    by 0x190FB8B: std::_Function_handler<void (), gem5::ruby::Consumer::Consumer(gem5::ClockedObject*, signed char)::{lambda()#1}>::_M_invoke(std::_Any_data const&) (std_function.h:291)
 ==8680==    by 0x372991: std::function<void ()>::operator()() const (std_function.h:622)
-==8680== 
+==8680==
 ```
 
 Issue: not checking if inport has a flit waiting in it before getting flit.
@@ -1434,7 +1434,7 @@ and
 ==9913==    by 0x1ADDBED: gem5::ruby::garnet::SwitchAllocator::send_allowed(int, int, std::vector<gem5::ruby::garnet::OutInfo, std::allocator<gem5::ruby::garnet::OutInfo> >) (SwitchAllocator.cc:414)
 ==9913==    by 0x1ADD2A6: gem5::ruby::garnet::SwitchAllocator::arbitrate_inports() (SwitchAllocator.cc:125)
 ==9913==    by 0x1ADD19B: gem5::ruby::garnet::SwitchAllocator::wakeup() (SwitchAllocator.cc:90)
-==9913== 
+==9913==
 ```
 
 The issue seems to be from when send_allowed calls has_credit.
@@ -1508,3 +1508,18 @@ At this point, I have no idea what is causing this bug.
 I am going to try running the parsec benchmark on an unmodified version of gem5
 (with RubyNetwork debug printing enabled).
 I will compare the output to the same from the currently modified version.
+
+
+
+## 2023-06-01
+
+### Modifying Garnet Synthetic Traffic to send messages with multiple destinations
+
+File names are listed here:
+https://www.gem5.org/documentation/general_docs/ruby/garnet_synthetic_traffic/
+
+In the procedure GarnetSyntheticTraffic::generatePkt a `destination` is generated
+for the packet.
+Then the destination is converted to `paddr` ("packet address", presumably).
+The `paddr` is put into a `Request` object (in a shared pointer).
+Then the `Request` is put into a `Packet` and sent off.

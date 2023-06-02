@@ -194,7 +194,7 @@ SwitchAllocator::arbitrate_outports()
 
 	if (requested_out_info.size() == 0)
 	    continue;
-	
+
         bool successfully_claimed = try_claiming_outports(requested_out_info);
 
         if (successfully_claimed) {
@@ -389,7 +389,7 @@ SwitchAllocator::send_allowed(int inport, int invc,
 {
     for (int outport = 0; outport < out_info.size(); outport++) {
         if (out_info[outport].routes.size() == 0)
-            break; // outport not being used
+            continue; // outport not being used
 
         // Check if outvc needed
         // Check if credit needed (for multi-flit packet)
