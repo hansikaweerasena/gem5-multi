@@ -103,6 +103,7 @@ CrossbarSwitch::wakeup()
                 m_router->getOutputUnit(outport)->insert_flit(t_flit_dup);
             }
             switch_buffer.getTopFlit();
+            delete t_flit;
             m_crossbar_activity++;
         }
     }
