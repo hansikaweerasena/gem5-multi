@@ -78,6 +78,8 @@ CrossbarSwitch::wakeup()
         if (t_flit->is_stage(ST_, curTick())) {
             std::vector<OutInfo> out_info = t_flit->m_out_info;
 
+
+            bool is_first = true;
             for (int outport = 0; outport < out_info.size(); outport++) {
                 if (out_info[outport].routes.size() == 0)
                     continue;
@@ -92,8 +94,14 @@ CrossbarSwitch::wakeup()
                     out_info[outport].msg_ptrs,
                     t_flit->msgSize,
                     t_flit->m_width,
-                    t_flit->get_stage().second);
+                    curTick());
 
+                if(is_first){
+                    t_flit_dup->set_enqueue_time(t_flit->get_enqueue_time());
+                    t_flit_dup->set_src_delay(t_flit->get_src_delay());
+                }else{
+                    t_flit_dup->set_src_delay(m_router->cyclesToTicks(Cycles(0)));
+                }
                 // flit performs LT_ in the next cycle
                 t_flit_dup->advance_stage(LT_, m_router->clockEdge(Cycles(1)));
                 t_flit_dup->set_time(m_router->clockEdge(Cycles(1)));
@@ -101,6 +109,7 @@ CrossbarSwitch::wakeup()
                 // This will take care of waking up the Network Link
                 // in the next cycle
                 m_router->getOutputUnit(outport)->insert_flit(t_flit_dup);
+                is_first = false;
             }
             switch_buffer.getTopFlit();
             delete t_flit;
