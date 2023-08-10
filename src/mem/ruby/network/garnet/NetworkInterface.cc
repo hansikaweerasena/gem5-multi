@@ -391,7 +391,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             "Num Destinations: %d.\n", dest_nodes.size());
 
         std::vector<RouteInfo> routes(dest_nodes.size());
-	std::vector<MsgPtr> new_msg_ptrs(dest_nodes.size());
+	    std::vector<MsgPtr> new_msg_ptrs(dest_nodes.size());
 	
         // this will return a free output virtual channel
         int vc = calculateVC(vnet);
@@ -444,8 +444,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         }
 
         m_net_ptr->increment_injected_packets(vnet);
-	for (auto route : routes)
-	    m_net_ptr->update_traffic_distribution(route);
+        for (auto route : routes)
+            m_net_ptr->update_traffic_distribution(route);
         int packet_id = m_net_ptr->getNextPacketID();
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
@@ -508,8 +508,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             routes[0].dest_ni = destID;
             routes[0].dest_router = m_net_ptr->get_router_id(destID, vnet);
 
-	    std::vector<MsgPtr> new_msg_ptrs(1);
-	    new_msg_ptrs[0] = new_msg_ptr;
+	        std::vector<MsgPtr> new_msg_ptrs(1);
+	        new_msg_ptrs[0] = new_msg_ptr;
 	    
             // initialize hops_traversed to -1
             // so that the first router increments it to 0
