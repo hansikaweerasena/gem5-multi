@@ -123,11 +123,22 @@ SwitchAllocator::arbitrate_inports()
 
                 // check if the flit in this InputVC is allowed to be sent
                 // send_allowed conditions described in that function.
-                bool make_request = send_allowed(inport, invc, out_info);
+                std::vector<OutInfo> new_out_info(m_router->get_num_outports());
+
+                bool make_request = false;
+
+                for (size_t outport = 0; i < out_info.size(); ++i) {
+                    if(out_info[outport].routes.size() !=0 && send_allowed(inport, invc, outport, out_info[outport].outvc)){
+                        new_out_info[outport] = out_info[outport];
+                        // out_info[outport] = new OutInfo();
+                        make_request == true;
+                    }
+                }           
 
                 if (make_request) {
                     m_input_arbiter_activity++;
-                    m_port_requests[inport] = out_info;
+                    // TODO: when clearing m_port_request make sure the unused out_info get back to the invc of input_unit
+                    m_port_requests[inport] = new_out_info;
                     m_vc_winners[inport] = invc;
 
                     break; // got one vc winner for this port
@@ -384,67 +395,42 @@ SwitchAllocator::arbitrate_outports()
  */
 
 bool
-SwitchAllocator::send_allowed(int inport, int invc,
-    std::vector<OutInfo> out_info)
+SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
 {
-    for (int outport = 0; outport < out_info.size(); outport++) {
-        if (out_info[outport].routes.size() == 0)
-            continue; // outport not being used
+    // Check if outvc needed
+    // Check if credit needed (for multi-flit packet)
+    // Check if ordering violated (in ordered vnet)
 
-        // Check if outvc needed
-        // Check if credit needed (for multi-flit packet)
-        // Check if ordering violated (in ordered vnet)
+    int vnet = get_vnet(invc);
+    bool has_outvc = (outvc != -1);
+    bool has_credit = false;
 
-        int vnet = get_vnet(invc);
-        bool has_outvc = (out_info[outport].outvc != -1);
-        bool has_credit = false;
+    auto output_unit = m_router->getOutputUnit(outport);
+    if (!has_outvc) {
 
-        auto output_unit = m_router->getOutputUnit(outport);
-        if (!has_outvc) {
+        // needs outvc
+        // this is only true for HEAD and HEAD_TAIL flits.
 
-            // needs outvc
-            // this is only true for HEAD and HEAD_TAIL flits.
+        if (output_unit->has_free_vc(vnet)) {
 
-            if (output_unit->has_free_vc(vnet)) {
+            has_outvc = true;
 
-                has_outvc = true;
-
-                // each VC has at least one buffer,
-                // so no need for additional credit check
-                has_credit = true;
-            }
-        } else {
-            has_credit = output_unit->has_credit(out_info[outport].outvc);
+            // each VC has at least one buffer,
+            // so no need for additional credit check
+            has_credit = true;
         }
+    } else {
+        has_credit = output_unit->has_credit(outvc);
+    }
 
-        // cannot send if no outvc or no credit.
-        if (!has_outvc || !has_credit)
-            return false;
+    // cannot send if no outvc or no credit.
+    if (!has_outvc || !has_credit)
+        return false;
 
 
-        // protocol ordering check
-        if ((m_router->get_net_ptr())->isVNetOrdered(vnet)) {
-            auto input_unit = m_router->getInputUnit(inport);
-
-            // enqueue time of this flit
-            Tick t_enqueue_time = input_unit->get_enqueue_time(invc);
-
-            // check if any other flit is ready for SA and for same output port
-            // and was enqueued before this flit
-            int vc_base = vnet*m_vc_per_vnet;
-            for (int vc_offset = 0; vc_offset < m_vc_per_vnet; vc_offset++) {
-                int temp_vc = vc_base + vc_offset;
-                for (int j = 0; j < out_info.size(); j++) {
-                    if (out_info[j].routes.size() > 0 &&
-			out_info[j].outvc == temp_vc)
-                        return false;
-                }
-                if (input_unit->need_stage(temp_vc, SA_, curTick()) &&
-                   (input_unit->get_enqueue_time(temp_vc) < t_enqueue_time)) {
-                    return false;
-                }
-            }
-        }
+    // protocol ordering check
+    if ((m_router->get_net_ptr())->isVNetOrdered(vnet)) {
+        panic("Ordred Vnet is not supported with multicast router at the moment")
     }
 
     return true;
