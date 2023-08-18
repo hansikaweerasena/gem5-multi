@@ -52,13 +52,14 @@ class flit
   public:
     flit() {}
     flit(int packet_id, int id, int vc, int vnet,
-         std::vector<RouteInfo> routes, int size,
+         std::vector<RouteInfo> routes, int size, int eff_dest,
          std::vector<MsgPtr> msg_ptrs, int MsgSize,
 	 uint32_t bWidth, Tick curTime);
 
     virtual ~flit(){};
 
     int get_size() { return m_size; }
+    int get_eff_dest() { return m_eff_dest; }
     Tick get_enqueue_time() { return m_enqueue_time; }
     Tick get_dequeue_time() { return m_dequeue_time; }
     int getPacketID() { return m_packet_id; }
@@ -75,11 +76,14 @@ class flit
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
 
+    void set_eff_dest(int eff_dest) { m_eff_dest = eff_dest; }
     void set_time(Tick time) { m_time = time; }
     void set_vc(int vc) { m_vc = vc; }
     void set_src_delay(Tick delay) { src_delay = delay; }
     void set_dequeue_time(Tick time) { m_dequeue_time = time; }
     void set_enqueue_time(Tick time) { m_enqueue_time = time; }
+    void set_msg_ptrs(std::vector<MsgPtr> msg_ptrs) { m_msg_ptrs = msg_ptrs;}
+    void set_routes(std::vector<RouteInfo> routes) { m_routes = routes;}
 
     void increment_hops() { for (auto r : m_routes) r.hops_traversed++; }
     virtual void print(std::ostream& out) const;
@@ -126,6 +130,7 @@ class flit
     int m_vc;
     std::vector<RouteInfo> m_routes;
     int m_size;
+    int m_eff_dest;
     Tick m_enqueue_time, m_dequeue_time;
     Tick m_time;
     flit_type m_type;
