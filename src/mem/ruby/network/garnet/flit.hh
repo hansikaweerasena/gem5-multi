@@ -58,6 +58,7 @@ class flit
 
     virtual ~flit(){};
 
+    int get_outport() {return m_outport; }
     int get_size() { return m_size; }
     int get_eff_dest() { return m_eff_dest; }
     Tick get_enqueue_time() { return m_enqueue_time; }
@@ -76,6 +77,7 @@ class flit
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
 
+    void set_outport(int port) { m_outport = port; }
     void set_eff_dest(int eff_dest) { m_eff_dest = eff_dest; }
     void set_time(Tick time) { m_time = time; }
     void set_vc(int vc) { m_vc = vc; }
@@ -121,7 +123,6 @@ class flit
 
     uint32_t m_width;
     int msgSize;
-    std::vector<OutInfo> m_out_info; // indexed by outport
 
   protected:
     int m_packet_id;
@@ -135,6 +136,7 @@ class flit
     Tick m_time;
     flit_type m_type;
     std::vector<MsgPtr> m_msg_ptrs;
+    int m_outport;
     Tick src_delay;
     std::pair<flit_stage, Tick> m_stage;
 };
