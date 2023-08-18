@@ -134,7 +134,7 @@ SwitchAllocator::arbitrate_inports()
                     if(out_info[outport].routes.size() !=0 && send_allowed(inport, invc, outport, out_info[outport].outvc)){
                         new_out_info[outport] = out_info[outport];
                         // out_info[outport] = new OutInfo();
-                        make_request == true;
+                        make_request = true;
                     }
                 }           
 
@@ -156,36 +156,8 @@ SwitchAllocator::arbitrate_inports()
 }
 
 
-void
-SwitchAllocator::reset_outport_availabilities()
-{
-    m_outport_availabilities = std::vector<bool>(m_num_outports, true);
-}
-
-/*
- * If outports are available, claims them and returns true.
- * Otherwise, makes no changes and returns false.
- */
-
-bool
-SwitchAllocator::try_claiming_outports(std::vector<OutInfo> requested_out_info)
-{
-    for (int i = 0; i < requested_out_info.size(); i++)
-        if (requested_out_info[i].routes.size() > 0 &&
-          !m_outport_availabilities[i])
-            return false; // at least one outport is unavailable
-
-    for (int i = 0; i < requested_out_info.size(); i++)
-        if (requested_out_info[i].routes.size() > 0)
-            m_outport_availabilities[i] = false;
-
-    return true;
-}
-
-
 /*
 * Returns true if the out_info contains the given outport and false otherwise.
-*/
 */
 
 bool 
@@ -253,11 +225,11 @@ SwitchAllocator::arbitrate_outports()
                 if (t_flit_peak->get_eff_dest() == out_info.routes.size())
                 {
                     is_last = true;
-                    *t_flit = input_unit->getTopFlit(invc);
+                    t_flit = input_unit->getTopFlit(invc);
 
-                    t_flit->set_msg_ptrs(out_info[outport].msg_ptrs);
-                    t_flit->set_routes(out_info[outport].routes);
-                    t_flit->set_vc(out_info[outport].outvc);
+                    t_flit->set_msg_ptrs(out_info.msg_ptrs);
+                    t_flit->set_routes(out_info.routes);
+                    t_flit->set_vc(out_info.outvc);
 
                 } else {
                     
@@ -268,12 +240,12 @@ SwitchAllocator::arbitrate_outports()
                     *t_flit = new flit(
                     t_flit_peak->getPacketID(),
                     t_flit_peak->get_id(),
-                    out_info[outport].outvc,
+                    out_info.outvc,
                     t_flit_peak->get_vnet(),
-                    out_info[outport].routes,
+                    out_info.routes,
                     t_flit_peak->get_size(),
                     out_info.routes.size(),
-                    out_info[outport].msg_ptrs,
+                    out_info.msg_ptrs,
                     t_flit_peak->msgSize,
                     t_flit_peak->m_width,
                     curTick());
