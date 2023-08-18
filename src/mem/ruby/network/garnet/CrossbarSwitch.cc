@@ -76,43 +76,16 @@ CrossbarSwitch::wakeup()
 
         flit *t_flit = switch_buffer.peekTopFlit();
         if (t_flit->is_stage(ST_, curTick())) {
-            std::vector<OutInfo> out_info = t_flit->m_out_info;
+            int outport = t_flit->get_outport();
 
+            // flit performs LT_ in the next cycle
+            t_flit->advance_stage(LT_, m_router->clockEdge(Cycles(1)));
+            t_flit->set_time(m_router->clockEdge(Cycles(1)));
 
-            bool is_first = true;
-            for (int outport = 0; outport < out_info.size(); outport++) {
-                if (out_info[outport].routes.size() == 0)
-                    continue;
-
-                flit *t_flit_dup = new flit(
-                    t_flit->getPacketID(),
-                    t_flit->get_id(),
-                    out_info[outport].outvc,
-                    t_flit->get_vnet(),
-                    out_info[outport].routes,
-                    t_flit->get_size(),
-                    out_info[outport].msg_ptrs,
-                    t_flit->msgSize,
-                    t_flit->m_width,
-                    curTick());
-
-                if(is_first){
-                    t_flit_dup->set_enqueue_time(t_flit->get_enqueue_time());
-                    t_flit_dup->set_src_delay(t_flit->get_src_delay());
-                }else{
-                    t_flit_dup->set_src_delay(m_router->cyclesToTicks(Cycles(0)));
-                }
-                // flit performs LT_ in the next cycle
-                t_flit_dup->advance_stage(LT_, m_router->clockEdge(Cycles(1)));
-                t_flit_dup->set_time(m_router->clockEdge(Cycles(1)));
-
-                // This will take care of waking up the Network Link
-                // in the next cycle
-                m_router->getOutputUnit(outport)->insert_flit(t_flit_dup);
-                is_first = false;
-            }
+            // This will take care of waking up the Network Link
+            // in the next cycle
+            m_router->getOutputUnit(outport)->insert_flit(t_flit);
             switch_buffer.getTopFlit();
-            delete t_flit;
             m_crossbar_activity++;
         }
     }
