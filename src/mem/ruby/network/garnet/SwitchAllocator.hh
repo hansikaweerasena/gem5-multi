@@ -63,8 +63,8 @@ class SwitchAllocator : public Consumer
     void print(std::ostream& out) const {};
     void arbitrate_inports();
     void arbitrate_outports();
-    bool send_allowed(int inport, int invc, std::vector<OutInfo> out_info);
-    std::vector<OutInfo> vc_allocate(std::vector<OutInfo> out_info, int inport, int invc);
+    bool send_allowed(int inport, int invc, int outport, int outvc);
+    int vc_allocate(OutInfo outinfo, int outport, int inport, int invc);
 
     inline double
     get_input_arbiter_activity()
@@ -81,6 +81,7 @@ class SwitchAllocator : public Consumer
 
     void reset_outport_availabilities();
     bool try_claiming_outports(std::vector<OutInfo> requested_out_info);
+    bool is_outport_requested(std::vector<OutInfo> inport_out_info, int outport);
 
   private:
     int m_num_inports, m_num_outports;

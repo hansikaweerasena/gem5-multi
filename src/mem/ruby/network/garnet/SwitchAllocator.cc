@@ -63,6 +63,7 @@ SwitchAllocator::init()
 {
     m_num_inports = m_router->get_num_inports();
     m_num_outports = m_router->get_num_outports();
+    m_round_robin_inport.resize(m_num_outports);
     m_round_robin_invc.resize(m_num_inports);
     m_port_requests.resize(m_num_inports);
     m_vc_winners.resize(m_num_inports);
@@ -73,7 +74,9 @@ SwitchAllocator::init()
         m_vc_winners[i] = -1;
     }
 
-    m_round_robin_inport = 0;
+    for (int i = 0; i < m_num_outports; i++) {
+        m_round_robin_inport[i] = 0;
+    }
 }
 
 /*
@@ -127,7 +130,7 @@ SwitchAllocator::arbitrate_inports()
 
                 bool make_request = false;
 
-                for (size_t outport = 0; i < out_info.size(); ++i) {
+                for (size_t outport = 0; outport < out_info.size(); ++outport) {
                     if(out_info[outport].routes.size() !=0 && send_allowed(inport, invc, outport, out_info[outport].outvc)){
                         new_out_info[outport] = out_info[outport];
                         // out_info[outport] = new OutInfo();
@@ -181,6 +184,20 @@ SwitchAllocator::try_claiming_outports(std::vector<OutInfo> requested_out_info)
 
 
 /*
+* Returns true if the out_info contains the given outport and false otherwise.
+*/
+*/
+
+bool 
+is_outport_requested(std::vector<OutInfo> inport_out_info, int outport)
+{
+    if (inport_out_info[outport].routes.size() != 0) {
+        return true;
+    }
+}
+
+
+/*
  * SA-II (or SA-o) loops through all output ports,
  * and selects one input VC (that placed a request during SA-I)
  * as the winner for this output port in a round robin manner.
@@ -197,83 +214,6 @@ SwitchAllocator::try_claiming_outports(std::vector<OutInfo> requested_out_info)
 void
 SwitchAllocator::arbitrate_outports()
 {
-    reset_outport_availabilities();
-
-    int inport = m_round_robin_inport;
-    for (int inport_iter = 0; inport_iter < m_num_inports; inport_iter++) {
-        std::vector<OutInfo> &requested_out_info = m_port_requests[inport];
-
-	if (requested_out_info.size() == 0)
-	    continue;
-
-        bool successfully_claimed = try_claiming_outports(requested_out_info);
-
-        if (successfully_claimed) {
-            InputUnit* input_unit = m_router->getInputUnit(inport);
-
-            // grant this inport its requested outports
-            int invc = m_vc_winners[inport];
-
-            flit *t_flit = input_unit->getTopFlit(invc);
-
-            std::vector<OutInfo> out_info = input_unit->get_out_info(invc);
-            if ((t_flit->get_type() == HEAD_) || t_flit->get_type() == HEAD_TAIL_)
-                out_info =vc_allocate(out_info, inport, invc);
-
-            t_flit->m_out_info = out_info;
-
-            for (int outport = 0; outport < out_info.size(); outport++)
-                if (out_info[outport].outvc != -1) {
-		    //std::cout << "[DEBUG]" << *t_flit << std::endl;
-                    m_router->getOutputUnit(outport)->
-                        decrement_credit(out_info[outport].outvc);
-		}
-
-            t_flit->advance_stage(ST_, curTick());
-            m_router->grant_switch(inport, t_flit);
-            m_output_arbiter_activity++;
-
-            if ((t_flit->get_type() == TAIL_) ||
-                t_flit->get_type() == HEAD_TAIL_) {
-
-                // This Input VC should now be empty
-                assert(!(input_unit->isReady(invc, curTick())));
-
-                // Free this VC
-                input_unit->set_vc_idle(invc, curTick());
-
-                // Send a credit back
-                // along with the information that this VC is now idle
-                input_unit->increment_credit(invc, true, curTick());
-            } else {
-                // Send a credit back
-                // but do not indicate that the VC is idle
-                input_unit->increment_credit(invc, false, curTick());
-            }
-
-            // remove this request
-            m_port_requests[inport] = std::vector<OutInfo>();
-
-            // Update Round Robin pointer to the next VC
-            // We do it here to keep it fair.
-            // Only the VC which got switch traversal
-            // is updated.
-            m_round_robin_invc[inport] = invc + 1;
-            if (m_round_robin_invc[inport] >= m_num_vcs)
-                m_round_robin_invc[inport] = 0;
-        }
-
-        inport++;
-        if (inport >= m_num_inports)
-            inport = 0;
-    }
-
-    // Update Round Robin pointer
-    m_round_robin_inport = inport + 1;
-    if (m_round_robin_inport >= m_num_inports)
-        m_round_robin_inport = 0;
-
-/*
     // Now there are a set of input vc requests for output vcs.
     // Again do round robin arbitration on these requests
     // Independent arbiter at each output port
@@ -284,21 +224,63 @@ SwitchAllocator::arbitrate_outports()
                  inport_iter++) {
 
             // inport has a request this cycle for outport
-            if (m_port_requests[inport] == outport) {
+            if (is_outport_requested(m_port_requests[inport], outport)) {
                 auto output_unit = m_router->getOutputUnit(outport);
                 auto input_unit = m_router->getInputUnit(inport);
 
                 // grant this outport to this inport
                 int invc = m_vc_winners[inport];
 
-                int outvc = input_unit->get_outvc(invc);
+                OutInfo out_info = input_unit->get_out_info(invc)[outport];
+                int outvc = out_info.outvc;
                 if (outvc == -1) {
                     // VC Allocation - select any free VC from outport
-                    outvc = vc_allocate(outport, inport, invc);
+                    outvc = vc_allocate(out_info, outport, inport, invc);
                 }
 
+// peak top flit and duplicate flit here and transfer the stat information later (only one should carry all the information other should reset)
+// clean out selected outport from m_port_request and original input_request 
+// delete condition for flit : if m_port_request and original input_request does not has routes for all outports
+// stat transfer can be done for the deletion of the flit
+// credit decrement in outpout port for each flit, but increment in input port for only when flit is deleted
+
                 // remove flit from Input VC
-                flit *t_flit = input_unit->getTopFlit(invc);
+                flit *t_flit_peak = input_unit->peekTopFlit(invc);
+                flit *t_flit = nullptr;
+
+                // check wether the flit is done branching out in this router acording to multicast algorithm
+                bool is_last = false;
+                if (t_flit_peak->get_eff_dest() == out_info.routes.size())
+                {
+                    is_last = true;
+                    *t_flit = input_unit->getTopFlit(invc);
+
+                    t_flit->set_msg_ptrs(out_info[outport].msg_ptrs);
+                    t_flit->set_routes(out_info[outport].routes);
+                    t_flit->set_vc(out_info[outport].outvc);
+
+                } else {
+                    
+                    //update the number of effective destinations in the flit in input buffer
+                    t_flit_peak->set_eff_dest(t_flit_peak->get_eff_dest() - out_info.routes.size());
+
+                    // duplicating flit for branching out
+                    *t_flit = new flit(
+                    t_flit_peak->getPacketID(),
+                    t_flit_peak->get_id(),
+                    out_info[outport].outvc,
+                    t_flit_peak->get_vnet(),
+                    out_info[outport].routes,
+                    t_flit_peak->get_size(),
+                    out_info.routes.size(),
+                    out_info[outport].msg_ptrs,
+                    t_flit_peak->msgSize,
+                    t_flit_peak->m_width,
+                    curTick());
+
+                    t_flit->set_src_delay(m_router->cyclesToTicks(Cycles(0)));
+                }
+                
 
                 DPRINTF(RubyNetwork, "SwitchAllocator at Router %d "
                                      "granted outvc %d at outport %d "
@@ -333,26 +315,30 @@ SwitchAllocator::arbitrate_outports()
                 m_router->grant_switch(inport, t_flit);
                 m_output_arbiter_activity++;
 
-                if ((t_flit->get_type() == TAIL_) ||
-                    t_flit->get_type() == HEAD_TAIL_) {
+                if(is_last){
+                    if ((t_flit->get_type() == TAIL_) ||
+                        t_flit->get_type() == HEAD_TAIL_) {
 
-                    // This Input VC should now be empty
-                    assert(!(input_unit->isReady(invc, curTick())));
+                        // This Input VC should now be empty
+                        assert(!(input_unit->isReady(invc, curTick())));
 
-                    // Free this VC
-                    input_unit->set_vc_idle(invc, curTick());
+                        // Free this VC
+                        input_unit->set_vc_idle(invc, curTick());
 
-                    // Send a credit back
-                    // along with the information that this VC is now idle
-                    input_unit->increment_credit(invc, true, curTick());
-                } else {
-                    // Send a credit back
-                    // but do not indicate that the VC is idle
-                    input_unit->increment_credit(invc, false, curTick());
+                        // Send a credit back
+                        // along with the information that this VC is now idle
+                        input_unit->increment_credit(invc, true, curTick());
+                    } else {
+                        // Send a credit back
+                        // but do not indicate that the VC is idle
+                        input_unit->increment_credit(invc, false, curTick());
+                    }
                 }
 
-                // remove this request
-                m_port_requests[inport] = -1;
+                // remove this outport of this request (other outports of the request still needed to be managed)
+                m_port_requests[inport][outport] = OutInfo();
+                //remove this out information relavent to this outport from the input unit (other out info for other out ports of the input unit still needed to be managed)
+                m_router->getInputUnit(inport)->update_out_info(-1, outport, OutInfo());
 
                 // Update Round Robin pointer
                 m_round_robin_inport[outport] = inport + 1;
@@ -376,8 +362,6 @@ SwitchAllocator::arbitrate_outports()
                 inport = 0;
         }
     }
-*/
-
 }
 
 /*
@@ -436,24 +420,20 @@ SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
     return true;
 }
 
+
 // Assign a free VC to the winner of the output port.
-std::vector<OutInfo>
-SwitchAllocator::vc_allocate(std::vector<OutInfo> out_info, int inport, int invc)
+int
+SwitchAllocator::vc_allocate(OutInfo outinfo, int outport, int inport, int invc)
 {
-    for (int i = 0; i < out_info.size(); i++) {
-        if (out_info[i].routes.size() > 0) {
-            // Select a free VC from the output port
-            int outvc = m_router->getOutputUnit(i)->select_free_vc(get_vnet(invc));
+    // Select a free VC from the output port
+    int outvc =
+        m_router->getOutputUnit(outport)->select_free_vc(get_vnet(invc));
 
-            // has to get a valid VC since it checked before performing SA
-            assert(outvc != -1);
-
-            out_info[i].outvc = outvc;
-        }
-    }
-
-    m_router->getInputUnit(inport)->set_out_info(invc, out_info);
-    return out_info;
+    // has to get a valid VC since it checked before performing SA
+    assert(outvc != -1);
+    outinfo.outvc = outvc;
+    m_router->getInputUnit(inport)->update_out_info(invc, outport, outinfo);
+    return outvc;
 }
 
 // Wakeup the router next cycle to perform SA again
