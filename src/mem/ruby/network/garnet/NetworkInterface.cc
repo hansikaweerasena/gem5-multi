@@ -450,7 +450,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
             flit *fl = new flit(packet_id,
-                i, vc, vnet, routes, num_flits, new_msg_ptrs,
+                i, vc, vnet, routes, num_flits, dest_nodes.size(), new_msg_ptrs,
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
                 oPort->bitWidth(), curTick());
@@ -521,7 +521,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             for (int i = 0; i < num_flits; i++) {
                 m_net_ptr->increment_injected_flits(vnet);
                 flit *fl = new flit(packet_id,
-                    i, vc, vnet, routes, num_flits, new_msg_ptrs,
+                    i, vc, vnet, routes, num_flits, 1, new_msg_ptrs,
                     m_net_ptr->MessageSizeType_to_int(
                     net_msg_ptr->getMessageSize()),
                     oPort->bitWidth(), curTick());
