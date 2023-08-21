@@ -166,6 +166,7 @@ is_outport_requested(std::vector<OutInfo> inport_out_info, int outport)
     if (inport_out_info[outport].routes.size() != 0) {
         return true;
     }
+    return false;
 }
 
 
@@ -237,7 +238,7 @@ SwitchAllocator::arbitrate_outports()
                     t_flit_peak->set_eff_dest(t_flit_peak->get_eff_dest() - out_info.routes.size());
 
                     // duplicating flit for branching out
-                    *t_flit = new flit(
+                    t_flit = new flit(
                     t_flit_peak->getPacketID(),
                     t_flit_peak->get_id(),
                     out_info.outvc,
@@ -386,7 +387,7 @@ SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
 
     // protocol ordering check
     if ((m_router->get_net_ptr())->isVNetOrdered(vnet)) {
-        panic("Ordred Vnet is not supported with multicast router at the moment")
+        panic("Ordred Vnet is not supported with multicast router at the moment");
     }
 
     return true;
