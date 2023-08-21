@@ -161,7 +161,7 @@ SwitchAllocator::arbitrate_inports()
 */
 
 bool 
-is_outport_requested(std::vector<OutInfo> inport_out_info, int outport)
+SwitchAllocator::is_outport_requested(std::vector<OutInfo> inport_out_info, int outport)
 {
     if (inport_out_info[outport].routes.size() != 0) {
         return true;
