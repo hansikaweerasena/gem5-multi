@@ -209,7 +209,7 @@ SwitchAllocator::arbitrate_outports()
                 int outvc = out_info.outvc;
                 if (outvc == -1) {
                     // VC Allocation - select any free VC from outport
-                    outvc = vc_allocate(out_info, outport, inport, invc);
+                    out_info = vc_allocate(out_info, outport, inport, invc);
                 }
 
 // peak top flit and duplicate flit here and transfer the stat information later (only one should carry all the information other should reset)
@@ -307,12 +307,14 @@ SwitchAllocator::arbitrate_outports()
                         // but do not indicate that the VC is idle
                         input_unit->increment_credit(invc, false, curTick());
                     }
+                } else {
+                    //remove this out information relavent to this outport from the input unit (other out info for other out ports of the input unit still needed to be managed)
+                    // no need to do this if it's the last flit=true since the whole vc is set idle in that case
+                    m_router->getInputUnit(inport)->update_out_info(invc, outport, OutInfo());
                 }
 
                 // remove this outport of this request (other outports of the request still needed to be managed)
                 m_port_requests[inport][outport] = OutInfo();
-                //remove this out information relavent to this outport from the input unit (other out info for other out ports of the input unit still needed to be managed)
-                m_router->getInputUnit(inport)->update_out_info(invc, outport, OutInfo());
 
                 // Update Round Robin pointer
                 m_round_robin_inport[outport] = inport + 1;
@@ -396,7 +398,7 @@ SwitchAllocator::send_allowed(int inport, int invc, int outport, int outvc)
 
 
 // Assign a free VC to the winner of the output port.
-int
+OutInfo
 SwitchAllocator::vc_allocate(OutInfo outinfo, int outport, int inport, int invc)
 {
     // Select a free VC from the output port
@@ -407,7 +409,7 @@ SwitchAllocator::vc_allocate(OutInfo outinfo, int outport, int inport, int invc)
     assert(outvc != -1);
     outinfo.outvc = outvc;
     m_router->getInputUnit(inport)->update_out_info(invc, outport, outinfo);
-    return outvc;
+    return outinfo;
 }
 
 // Wakeup the router next cycle to perform SA again
