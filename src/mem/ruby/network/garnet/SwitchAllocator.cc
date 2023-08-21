@@ -206,8 +206,7 @@ SwitchAllocator::arbitrate_outports()
                 int invc = m_vc_winners[inport];
 
                 OutInfo out_info = input_unit->get_out_info(invc)[outport];
-                int outvc = out_info.outvc;
-                if (outvc == -1) {
+                if (out_info.outvc == -1) {
                     // VC Allocation - select any free VC from outport
                     out_info = vc_allocate(out_info, outport, inport, invc);
                 }
@@ -260,7 +259,7 @@ SwitchAllocator::arbitrate_outports()
                                      "granted outvc %d at outport %d "
                                      "to invc %d at inport %d to flit %s at "
                                      "cycle: %lld\n",
-                        m_router->get_id(), outvc,
+                        m_router->get_id(), out_info.outvc,
                         m_router->getPortDirectionName(
                             output_unit->get_direction()),
                         invc,
@@ -279,10 +278,10 @@ SwitchAllocator::arbitrate_outports()
 
                 // set outvc (i.e., invc for next hop) in flit
                 // (This was updated in VC by vc_allocate, but not in flit)
-                t_flit->set_vc(outvc);
+                t_flit->set_vc(out_info.outvc);
 
                 // decrement credit in outvc
-                output_unit->decrement_credit(outvc);
+                output_unit->decrement_credit(out_info.outvc);
 
                 // flit ready for Switch Traversal
                 t_flit->advance_stage(ST_, curTick());
