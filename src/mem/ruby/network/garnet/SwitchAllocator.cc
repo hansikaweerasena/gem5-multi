@@ -312,7 +312,7 @@ SwitchAllocator::arbitrate_outports()
                 // remove this outport of this request (other outports of the request still needed to be managed)
                 m_port_requests[inport][outport] = OutInfo();
                 //remove this out information relavent to this outport from the input unit (other out info for other out ports of the input unit still needed to be managed)
-                m_router->getInputUnit(inport)->update_out_info(-1, outport, OutInfo());
+                m_router->getInputUnit(inport)->update_out_info(invc, outport, OutInfo());
 
                 // Update Round Robin pointer
                 m_round_robin_inport[outport] = inport + 1;
