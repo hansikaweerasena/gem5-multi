@@ -84,7 +84,7 @@ class InputUnit : public Consumer
     inline void
     update_out_info(int vc, int outport, OutInfo out_info)
     {
-        virtualChannels[vc].get_out_info()[outport] = out_info;
+        virtualChannels[vc].update_out_info(outport, out_info);
     }
 
     inline std::vector<OutInfo>

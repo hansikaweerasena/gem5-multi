@@ -57,6 +57,7 @@ class VirtualChannel
     void set_active(Tick curTime);
     void set_out_info(std::vector<OutInfo> out_info) { m_out_info = out_info; }
     inline std::vector<OutInfo> get_out_info()       { return m_out_info; }
+    void update_out_info(int outport, OutInfo out_info) { m_out_info[outport] = out_info;}
 
     inline Tick get_enqueue_time()          { return m_enqueue_time; }
     inline void set_enqueue_time(Tick time) { m_enqueue_time = time; }
