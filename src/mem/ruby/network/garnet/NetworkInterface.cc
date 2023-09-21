@@ -374,7 +374,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
     MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
     
-    int num_offset_to_add = 2; 
+    NodeID num_offset_to_add = (NodeID)2; 
     NetDest additional_dest;
     additional_dest.add((MachineID) {existing_mtype, num_offset_to_add});
     net_msg_dest.addNetDest(additional_dest);   
