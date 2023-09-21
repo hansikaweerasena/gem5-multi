@@ -87,6 +87,8 @@ class NetDest
     // For Princeton Network
     std::vector<NodeID> getAllDest();
 
+    MachineType getMachineTypeFromNetDest();
+
     MachineID smallestElement() const;
     MachineID smallestElement(MachineType machine) const;
 

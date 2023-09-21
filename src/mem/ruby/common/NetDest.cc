@@ -124,6 +124,19 @@ NetDest::getAllDest()
     return dest;
 }
 
+
+MachineType 
+NetDest::getMachineTypeFromNetDest(){
+    for (int i = 0; i < m_bits.size(); i++) {
+        for (int j = 0; j < m_bits[i].getSize(); j++) {
+            if (m_bits[i].isElement(j)) {
+                return (MachineType)i;
+            }
+        }
+    }
+}
+
+
 int
 NetDest::count() const
 {

@@ -372,6 +372,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     Message *net_msg_ptr = msg_ptr.get();
     NetDest net_msg_dest = net_msg_ptr->getDestination();
 
+    MachineType existing_mtype = getMachineTypeFromNetDest();
+
     // gets all the destinations associated with this message.
     std::vector<NodeID> dest_nodes = net_msg_dest.getAllDest();
 
