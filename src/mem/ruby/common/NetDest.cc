@@ -134,6 +134,7 @@ NetDest::getMachineTypeFromNetDest(){
             }
         }
     }
+    return MachineType_NUM;
 }
 
 
