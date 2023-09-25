@@ -84,6 +84,9 @@ class NetDest
     bool isBroadcast() const;
     bool isEmpty() const;
 
+    bool isUsed() const { return used; }
+    void setUsed() { used = true; }
+
     // For Princeton Network
     std::vector<NodeID> getAllDest();
 
@@ -113,7 +116,8 @@ class NetDest
 
     NodeID bitIndex(NodeID index) const { return index; }
 
-    std::vector<Set> m_bits;  // a vector of bit vectors - i.e. Sets
+    std::vector<Set> m_bits;
+    bool used;  // a vector of bit vectors - i.e. Sets
 };
 
 inline std::ostream&
