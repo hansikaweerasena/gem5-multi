@@ -374,10 +374,19 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
     MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
     
-    NodeID num_offset_to_add = (NodeID)2; 
+    // NodeID num_offset_to_add = (NodeID)2; 
+    // NetDest additional_dest;
+    // additional_dest.add((MachineID) {existing_mtype, num_offset_to_add});
+    // net_msg_dest.addNetDest(additional_dest);   
+
+    NodeID offsets_to_add[] = {3, 4, 7, 11}; 
+    int num_offsets = sizeof(offsets_to_add) / sizeof(offsets_to_add[0]);
     NetDest additional_dest;
-    additional_dest.add((MachineID) {existing_mtype, num_offset_to_add});
-    net_msg_dest.addNetDest(additional_dest);   
+    for(int i = 0; i < num_offsets; i++) {
+        additional_dest.add((MachineID) {existing_mtype, offsets_to_add[i]});
+    }
+    net_msg_dest.addNetDest(additional_dest); 
+
 
     // gets all the destinations associated with this message.
     std::vector<NodeID> dest_nodes = net_msg_dest.getAllDest();
@@ -675,6 +684,7 @@ NetworkInterface::getOutportForVnet(int vnet)
 
     return nullptr;
 }
+
 void
 NetworkInterface::scheduleFlit(flit *t_flit)
 {
