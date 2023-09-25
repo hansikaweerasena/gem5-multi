@@ -424,7 +424,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         }
 
         // added dealy for auth delay
-        this->set_auth_delay(clockEdge(Cycles(96));
+        this->set_auth_delay(clockEdge(Cycles(96)));
 
 
         for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
@@ -501,7 +501,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             }
 
             // added dealy for auth delay
-            this->set_auth_delay(clockEdge(Cycles(10*(ctr+1)));
+            this->set_auth_delay(clockEdge(Cycles(10*(ctr+1))));
 
             MsgPtr new_msg_ptr = msg_ptr->clone();
             NodeID destID = dest_nodes[ctr];
@@ -636,7 +636,7 @@ NetworkInterface::scheduleOutputPort(OutputPort *oPort)
 
                // Just removing the top flit
                flit *t_flit = niOutVcs[vc].getTopFlit();
-               t_flit->set_time(clockEdge(Cycles(1));
+               t_flit->set_time(clockEdge(Cycles(1)));
 
                // Scheduling the flit
                scheduleFlit(t_flit);
