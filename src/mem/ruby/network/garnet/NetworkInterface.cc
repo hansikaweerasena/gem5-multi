@@ -369,6 +369,13 @@ NetworkInterface::checkStallQueue()
 bool
 NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 {
+
+    if (this->get_auth_delay() > curTick())
+    {
+        return false;/* code */
+    }
+    
+
     Message *net_msg_ptr = msg_ptr.get();
     NetDest net_msg_dest = net_msg_ptr->getDestination();
 
@@ -416,6 +423,9 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             return false ;
         }
 
+        // added dealy for auth delay
+        this->set_auth_delay(clockEdge(Cycles(96));
+
 
         for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
 	    MsgPtr new_msg_ptr = msg_ptr->clone();
@@ -452,7 +462,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             routes[ctr].dest_ni = destID;
             routes[ctr].dest_router = m_net_ptr->get_router_id(destID, vnet);
 
-	    new_msg_ptrs[ctr] = new_msg_ptr;
+	        new_msg_ptrs[ctr] = new_msg_ptr;
 	    
             // initialize hops_traversed to -1
             // so that the first router increments it to 0
@@ -463,20 +473,21 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         for (auto route : routes)
             m_net_ptr->update_traffic_distribution(route);
         int packet_id = m_net_ptr->getNextPacketID();
+        Tick auth_delay = clockEdge(Cycles(96));
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
             flit *fl = new flit(packet_id,
                 i, vc, vnet, routes, num_flits, dest_nodes.size(), new_msg_ptrs,
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
-                oPort->bitWidth(), curTick());
+                oPort->bitWidth(), auth_delay);
 
-            fl->set_src_delay(curTick() - msg_ptr->getTime());
+            fl->set_src_delay(auth_delay - msg_ptr->getTime());
             niOutVcs[vc].insert(fl);
         }
 
-        m_ni_out_vcs_enqueue_time[vc] = curTick();
-        outVcState[vc].setState(ACTIVE_, curTick());
+        m_ni_out_vcs_enqueue_time[vc] = auth_delay;
+        outVcState[vc].setState(ACTIVE_, auth_delay);
     } else {
         DPRINTF(GarnetMulticast, "Flitisizing message as multiple unicast.\n");
         // loop to convert all multicast messages into unicast messages
@@ -488,6 +499,10 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             if (vc == -1) {
                 return false ;
             }
+
+            // added dealy for auth delay
+            this->set_auth_delay(clockEdge(Cycles(10*(ctr+1)));
+
             MsgPtr new_msg_ptr = msg_ptr->clone();
             NodeID destID = dest_nodes[ctr];
 
@@ -534,20 +549,21 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             m_net_ptr->increment_injected_packets(vnet);
             m_net_ptr->update_traffic_distribution(routes[0]);
             int packet_id = m_net_ptr->getNextPacketID();
+            Tick auth_delay = clockEdge(Cycles(10*(ctr+1)));
             for (int i = 0; i < num_flits; i++) {
                 m_net_ptr->increment_injected_flits(vnet);
                 flit *fl = new flit(packet_id,
                     i, vc, vnet, routes, num_flits, 1, new_msg_ptrs,
                     m_net_ptr->MessageSizeType_to_int(
                     net_msg_ptr->getMessageSize()),
-                    oPort->bitWidth(), curTick());
+                    oPort->bitWidth(),auth_delay);
 
-                fl->set_src_delay(curTick() - msg_ptr->getTime());
+                fl->set_src_delay(auth_delay - msg_ptr->getTime());
                 niOutVcs[vc].insert(fl);
             }
 
-            m_ni_out_vcs_enqueue_time[vc] = curTick();
-            outVcState[vc].setState(ACTIVE_, curTick());
+            m_ni_out_vcs_enqueue_time[vc] = auth_delay;
+            outVcState[vc].setState(ACTIVE_, auth_delay);
         }
     }
     return true ;
@@ -620,7 +636,7 @@ NetworkInterface::scheduleOutputPort(OutputPort *oPort)
 
                // Just removing the top flit
                flit *t_flit = niOutVcs[vc].getTopFlit();
-               t_flit->set_time(clockEdge(Cycles(1)));
+               t_flit->set_time(clockEdge(Cycles(1));
 
                // Scheduling the flit
                scheduleFlit(t_flit);

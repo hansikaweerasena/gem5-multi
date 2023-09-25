@@ -91,6 +91,9 @@ class NetworkInterface : public ClockedObject, public Consumer
         return oPort->routerID();
     }
 
+    Tick get_auth_delay() { return auth_delay; }
+    void set_auth_delay(Tick delay) { auth_delay = delay; }
+
     class OutputPort
     {
       public:
@@ -292,6 +295,7 @@ class NetworkInterface : public ClockedObject, public Consumer
     std::vector<MessageBuffer *> outNode_ptr;
     // When a vc stays busy for a long time, it indicates a deadlock
     std::vector<int> vc_busy_counter;
+    Tick auth_delay;
 
     void checkStallQueue();
     bool flitisizeMessage(MsgPtr msg_ptr, int vnet);
