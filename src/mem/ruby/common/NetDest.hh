@@ -117,7 +117,7 @@ class NetDest
     NodeID bitIndex(NodeID index) const { return index; }
 
     std::vector<Set> m_bits;
-    bool used;  // a vector of bit vectors - i.e. Sets
+    bool used = false;  // a vector of bit vectors - i.e. Sets
 };
 
 inline std::ostream&
