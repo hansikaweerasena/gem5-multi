@@ -500,6 +500,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
             if (vc == -1) {
                 net_msg_dest.setUsed();
+                net_msg_ptr->getDestination().setUsed();
                 return false ;
             }
 
