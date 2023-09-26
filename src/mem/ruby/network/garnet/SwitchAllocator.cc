@@ -251,6 +251,7 @@ SwitchAllocator::arbitrate_outports()
                     t_flit_peak->m_width,
                     curTick());
 
+                    t_flit->set_is_multiauth(t_flit_peak->is_multiauth());
                     t_flit->set_src_delay(m_router->cyclesToTicks(Cycles(0)));
                 }
                 
