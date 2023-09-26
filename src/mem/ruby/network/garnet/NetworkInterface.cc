@@ -162,7 +162,18 @@ NetworkInterface::incrementStats(flit *t_flit)
         t_flit->get_dequeue_time() -
         t_flit->get_enqueue_time() - cyclesToTicks(Cycles(1));
     Tick src_queueing_delay = t_flit->get_src_delay();
+
     Tick dest_queueing_delay = (curTick() - t_flit->get_dequeue_time());
+
+    if (t_flit->get_type() == TAIL_ || t_flit->get_type() == HEAD_TAIL_) {
+        if(t_flit->is_multiauth()){
+            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(26)));
+        }
+        else{
+            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(10)));
+        }
+    } 
+
     Tick queueing_delay = src_queueing_delay + dest_queueing_delay;
 
     m_net_ptr->increment_flit_network_latency(network_delay, vnet);
@@ -425,8 +436,17 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             return false ;
         }
 
+        Tick auth_delay = clockEdge(Cycles(96));
+        bool is_multi_auth = true;
+
+        if (dest_nodes.size() == 1)
+        {
+            is_multi_auth = false;
+            auth_delay = clockEdge(Cycles(10));
+        }
+
         // added dealy for auth delay
-        this->set_auth_delay(clockEdge(Cycles(96)));
+        this->set_auth_delay(auth_delay);
 
 
         for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
@@ -475,7 +495,6 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         for (auto route : routes)
             m_net_ptr->update_traffic_distribution(route);
         int packet_id = m_net_ptr->getNextPacketID();
-        Tick auth_delay = clockEdge(Cycles(96));
         for (int i = 0; i < num_flits; i++) {
             m_net_ptr->increment_injected_flits(vnet);
             flit *fl = new flit(packet_id,
@@ -483,7 +502,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
                 oPort->bitWidth(), auth_delay);
-
+            fl->set_is_multiauth(is_multi_auth);
             fl->set_src_delay(auth_delay - msg_ptr->getTime());
             niOutVcs[vc].insert(fl);
         }

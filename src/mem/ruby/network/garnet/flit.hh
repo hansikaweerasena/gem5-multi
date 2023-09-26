@@ -76,6 +76,7 @@ class flit
     flit_type get_type() { return m_type; }
     std::pair<flit_stage, Tick> get_stage() { return m_stage; }
     Tick get_src_delay() { return src_delay; }
+    bool is_multiauth() { return m_is_multiauth; }
 
     void set_outport(int port) { m_outport = port; }
     void set_eff_dest(int eff_dest) { m_eff_dest = eff_dest; }
@@ -86,6 +87,7 @@ class flit
     void set_enqueue_time(Tick time) { m_enqueue_time = time; }
     void set_msg_ptrs(std::vector<MsgPtr> msg_ptrs) { m_msg_ptrs = msg_ptrs;}
     void set_routes(std::vector<RouteInfo> routes) { m_routes = routes;}
+    void set_is_multiauth(bool is_multiauth) { m_is_multiauth = is_multiauth; }
 
     void increment_hops() { for (auto r : m_routes) r.hops_traversed++; }
     virtual void print(std::ostream& out) const;
@@ -139,6 +141,7 @@ class flit
     int m_outport;
     Tick src_delay;
     std::pair<flit_stage, Tick> m_stage;
+    bool m_is_multiauth = false;
 };
 
 inline std::ostream&
