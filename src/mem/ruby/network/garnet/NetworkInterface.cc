@@ -192,7 +192,7 @@ NetworkInterface::incrementStats(flit *t_flit)
 
 // The bumber of bytes in multi auth tag only depend on security strength and the number of multicast recipients (these are some pre calculated values)
 int
-getNumberOfMultiAuthBytes(int t, int N)
+NetworkInterface::getNumberOfMultiAuthBytes(int t, int N)
 {
     if (t==10 && N<=4){
         return 26;
@@ -455,7 +455,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
         Tick auth_delay = clockEdge(Cycles(96));
         bool is_multi_auth = true;
         int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-            net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10,dest_nodes.size()), (float)oPort->bitWidth());
+            net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10, dest_nodes.size()), (float)oPort->bitWidth());
 
         if (dest_nodes.size() == 1)
         {
