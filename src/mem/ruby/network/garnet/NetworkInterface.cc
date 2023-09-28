@@ -189,6 +189,21 @@ NetworkInterface::incrementStats(flit *t_flit)
     m_net_ptr->increment_total_hops(t_flit->get_route(0).hops_traversed);
 }
 
+
+// The bumber of bytes in multi auth tag only depend on security strength and the number of multicast recipients (these are some pre calculated values)
+int
+getNumberOfMultiAuthBytes(int t, int N)
+{
+    if (t==10 && N<=4){
+        return 26;
+    } else if(t==10 && N<=8){
+        return 40;
+    }else{
+        panic("Invalid t and N");
+        return 0;
+    }
+}
+
 /*
  * The NI wakeup checks whether there are any ready messages in the protocol
  * buffer. If yes, it picks that up, flitisizes it into a number of flits and
@@ -390,6 +405,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     Message *net_msg_ptr = msg_ptr.get();
     NetDest net_msg_dest = net_msg_ptr->getDestination();
 
+    // this condition for software unicast to avoid adding dummy destinations repeatedly for same packet
     if (!net_msg_dest.isUsed()) {
         
         MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
@@ -415,8 +431,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     // This is expressed in terms of bytes/cycle or the flit size
     OutputPort *oPort = getOutportForVnet(vnet);
     assert(oPort);
-    int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-        net_msg_ptr->getMessageSize()), (float)oPort->bitWidth());
+    // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+    //     net_msg_ptr->getMessageSize()), (float)oPort->bitWidth());
 
     DPRINTF(RubyNetwork, "Message Size:%d vnet:%d bitWidth:%d\n",
         m_net_ptr->MessageSizeType_to_int(net_msg_ptr->getMessageSize()),
@@ -438,11 +454,15 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
         Tick auth_delay = clockEdge(Cycles(96));
         bool is_multi_auth = true;
+        int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+            net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10,dest_nodes.size()), (float)oPort->bitWidth());
 
         if (dest_nodes.size() == 1)
         {
             is_multi_auth = false;
             auth_delay = clockEdge(Cycles(10));
+            num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+                net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
         }
 
         // added dealy for auth delay
@@ -525,6 +545,9 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
             // added dealy for auth delay
             this->set_auth_delay(clockEdge(Cycles(10*(ctr+1))));
+            // add 8 bytes to the message length for siphash tag
+            num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+                net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
 
             MsgPtr new_msg_ptr = msg_ptr->clone();
             NodeID destID = dest_nodes[ctr];

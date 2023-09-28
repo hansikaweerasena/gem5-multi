@@ -308,6 +308,8 @@ class NetworkInterface : public ClockedObject, public Consumer
 
     void incrementStats(flit *t_flit);
 
+    int getNumberOfMultiAuthBytes(int t, int N);
+
     InputPort *getInportForVnet(int vnet);
     OutputPort *getOutportForVnet(int vnet);
 };
