@@ -546,7 +546,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             // added dealy for auth delay
             this->set_auth_delay(clockEdge(Cycles(10*(ctr+1))));
             // add 8 bytes to the message length for siphash tag
-            num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+            int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
 
             MsgPtr new_msg_ptr = msg_ptr->clone();
