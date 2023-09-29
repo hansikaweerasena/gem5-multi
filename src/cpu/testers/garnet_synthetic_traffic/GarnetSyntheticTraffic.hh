@@ -133,6 +133,9 @@ class GarnetSyntheticTraffic : public ClockedObject
 
     const Cycles responseLimit;
 
+    // Multicast Probability
+    int multicstProb;
+
     RequestorID requestorId;
 
     void completeRequest(PacketPtr pkt);

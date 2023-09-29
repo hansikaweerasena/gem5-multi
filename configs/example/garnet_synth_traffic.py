@@ -117,6 +117,13 @@ parser.add_argument(
                         Set to -1 to inject randomly in all vnets.",
 )
 
+parser.add_argument(
+    "--multicast-prob", 
+    type="int", 
+    default=0,
+    help="Multicast probability of total messages (multicast packets are inject on vent 0)"
+)
+
 #
 # Add the ruby specific and protocol specific options
 #

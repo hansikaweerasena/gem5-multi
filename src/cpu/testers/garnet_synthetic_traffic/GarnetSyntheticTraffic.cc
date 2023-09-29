@@ -91,6 +91,7 @@ GarnetSyntheticTraffic::GarnetSyntheticTraffic(const Params &p)
       injVnet(p.inj_vnet),
       precision(p.precision),
       responseLimit(p.response_limit),
+      multicstProb(p->multicast_prob),
       requestorId(p.system->getRequestorId(this))
 {
     // set up counters
@@ -284,8 +285,14 @@ GarnetSyntheticTraffic::generatePkt()
 
     if (injReqType < 0 || injReqType > 2)
     {
-        // randomly inject in any vnet
-        injReqType = random_mt.random(0, 2);
+        int rand_num = random_mt.random<unsigned>(0, 100);
+        if(rand_num < multicstProb){
+            injReqType = 0;
+        }
+        else{
+            // randomly inject in any vnet
+            injReqType = random_mt.random(1, 2);
+        }
     }
 
     if (injReqType == 0) {

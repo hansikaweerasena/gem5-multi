@@ -75,3 +75,4 @@ class GarnetSyntheticTraffic(ClockedObject):
     )
     test = RequestPort("Port to the memory system to test")
     system = Param.System(Parent.any, "System we belong to")
+    multicast_prob = Param.Int("Probability of Multicast messages")
