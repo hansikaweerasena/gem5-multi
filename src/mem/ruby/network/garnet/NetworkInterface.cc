@@ -36,6 +36,7 @@
 #include <cmath>
 
 #include "base/cast.hh"
+#include "base/random.hh"
 #include "debug/GarnetMulticast.hh"
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/MessageBuffer.hh"
@@ -202,6 +203,14 @@ NetworkInterface::getNumberOfMultiAuthBytes(int t, int N)
         panic("Invalid t and N");
         return 0;
     }
+}
+
+
+// The number of cycles required calculate siphash length tag only depend on message length in bytes
+int
+NetworkInterface::getNumberOfSpiphshCycles(int msgLength)
+{
+    return (int)2.5*msgLength;
 }
 
 /*
@@ -407,21 +416,26 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
     // this condition for software unicast to avoid adding dummy destinations repeatedly for same packet
     if (!net_msg_dest.isUsed()) {
-        
-        MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
-        
-        // NodeID num_offset_to_add = (NodeID)2; 
-        // NetDest additional_dest;
-        // additional_dest.add((MachineID) {existing_mtype, num_offset_to_add});
-        // net_msg_dest.addNetDest(additional_dest);   
 
-        NodeID offsets_to_add[] = {3, 4, 7, 11}; 
-        int num_offsets = sizeof(offsets_to_add) / sizeof(offsets_to_add[0]);
-        NetDest additional_dest;
-        for(int i = 0; i < num_offsets; i++) {
-            additional_dest.add((MachineID) {existing_mtype, offsets_to_add[i]});
+        if(vnet = 0){
+            MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
+            
+            // NodeID num_offset_to_add = (NodeID)2; 
+            // NetDest additional_dest;
+            // additional_dest.add((MachineID) {existing_mtype, num_offset_to_add});
+            // net_msg_dest.addNetDest(additional_dest);   
+
+            // NodeID offsets_to_add[] = {3, 4, 7, 11}; 
+            // int num_offsets = sizeof(offsets_to_add) / sizeof(offsets_to_add[0]);
+
+            int no_of_multicast_dest = 8;
+            NetDest additional_dest;
+            for(int i = 0; i < no_of_multicast_dest - 1; i++) {
+                int newID = random_mt.random<unsigned>(0, 15);
+                additional_dest.add((MachineID) {existing_mtype, newID});
+            }
+            net_msg_dest.addNetDest(additional_dest); 
         }
-        net_msg_dest.addNetDest(additional_dest); 
     }
 
     // gets all the destinations associated with this message.
@@ -431,8 +445,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     // This is expressed in terms of bytes/cycle or the flit size
     OutputPort *oPort = getOutportForVnet(vnet);
     assert(oPort);
-    // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-    //     net_msg_ptr->getMessageSize()), (float)oPort->bitWidth());
+    int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+        net_msg_ptr->getMessageSize()), (float)oPort->bitWidth());
 
     DPRINTF(RubyNetwork, "Message Size:%d vnet:%d bitWidth:%d\n",
         m_net_ptr->MessageSizeType_to_int(net_msg_ptr->getMessageSize()),
@@ -454,15 +468,15 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
 
         Tick auth_delay = clockEdge(Cycles(96));
         bool is_multi_auth = true;
-        int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-            net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10, dest_nodes.size()), (float)oPort->bitWidth());
+        // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+        //     net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10, dest_nodes.size()), (float)oPort->bitWidth());
 
         if (dest_nodes.size() == 1)
         {
             is_multi_auth = false;
             auth_delay = clockEdge(Cycles(10));
-            num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-                net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
+            // num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+            //     net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
         }
 
         // added dealy for auth delay
@@ -546,8 +560,8 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             // added dealy for auth delay
             this->set_auth_delay(clockEdge(Cycles(10*(ctr+1))));
             // add 8 bytes to the message length for siphash tag
-            int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
-                net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
+            // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
+            //     net_msg_ptr->getMessageSize()) + 8, (float)oPort->bitWidth());
 
             MsgPtr new_msg_ptr = msg_ptr->clone();
             NodeID destID = dest_nodes[ctr];
@@ -796,10 +810,12 @@ NetworkInterface::checkReschedule()
         }
     }
 
-    for (auto& ni_out_vc : niOutVcs) {
-        if (ni_out_vc.isReady(clockEdge(Cycles(1)))) {
-            scheduleEvent(Cycles(1));
-            return;
+    for (int i = 1; i < 100; i++){
+        for (auto& ni_out_vc : niOutVcs) {
+            if (ni_out_vc.isReady(clockEdge(Cycles(i)))) {
+                scheduleEvent(Cycles(i));
+                return;
+            }
         }
     }
 

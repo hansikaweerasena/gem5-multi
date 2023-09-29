@@ -310,6 +310,8 @@ class NetworkInterface : public ClockedObject, public Consumer
 
     int getNumberOfMultiAuthBytes(int t, int N);
 
+    int getNumberOfSpiphshCycles(int msgLength);
+
     InputPort *getInportForVnet(int vnet);
     OutputPort *getOutportForVnet(int vnet);
 };
