@@ -119,7 +119,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--multicast-prob", 
-    type="int", 
+    type=int, 
     default=0,
     help="Multicast probability of total messages (multicast packets are inject on vent 0)"
 )
