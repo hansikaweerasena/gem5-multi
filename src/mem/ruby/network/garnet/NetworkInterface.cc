@@ -417,7 +417,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     // this condition for software unicast to avoid adding dummy destinations repeatedly for same packet
     if (!net_msg_dest.isUsed()) {
 
-        if(vnet = 0){
+        if(vnet == 0){
             MachineType existing_mtype = net_msg_dest.getMachineTypeFromNetDest();
             
             // NodeID num_offset_to_add = (NodeID)2; 
@@ -432,7 +432,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             NetDest additional_dest;
             for(int i = 0; i < no_of_multicast_dest - 1; i++) {
                 int newID = random_mt.random<unsigned>(0, 15);
-                additional_dest.add((MachineID) {existing_mtype, newID});
+                additional_dest.add((MachineID) {existing_mtype, (NodeID)newID});
             }
             net_msg_dest.addNetDest(additional_dest); 
         }

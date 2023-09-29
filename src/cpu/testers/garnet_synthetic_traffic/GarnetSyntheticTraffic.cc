@@ -91,7 +91,7 @@ GarnetSyntheticTraffic::GarnetSyntheticTraffic(const Params &p)
       injVnet(p.inj_vnet),
       precision(p.precision),
       responseLimit(p.response_limit),
-      multicstProb(p->multicast_prob),
+      multicstProb(p.multicast_prob),
       requestorId(p.system->getRequestorId(this))
 {
     // set up counters
