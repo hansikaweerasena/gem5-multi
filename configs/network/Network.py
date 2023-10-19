@@ -105,6 +105,20 @@ def define_options(parser):
             see src/mem/ruby/network/fault_model/""",
     )
     parser.add_argument(
+        "--multicast-mac-cycles",
+        action="store",
+        type=int,
+        default=96,
+        help="network-level deadlock threshold.",
+    )
+    parser.add_argument(
+        "--multicast-verify-cycles",
+        action="store",
+        type=int,
+        default=26,
+        help="network-level deadlock threshold.",
+    )
+    parser.add_argument(
         "--garnet-deadlock-threshold",
         action="store",
         type=int,
@@ -174,6 +188,8 @@ def init_network(options, network, InterfaceClass):
         network.vcs_per_vnet = options.vcs_per_vnet
         network.ni_flit_size = options.link_width_bits / 8
         network.routing_algorithm = options.routing_algorithm
+        network.multicast_mac_cycles = options.multicast_mac_cycles
+        network.multicast_verify_cycles = options.multicast_verify_cycles
         network.garnet_deadlock_threshold = options.garnet_deadlock_threshold
         network.enable_multicast = options.multicast
 

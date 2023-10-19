@@ -51,6 +51,12 @@ class GarnetNetwork(RubyNetwork):
     garnet_deadlock_threshold = Param.UInt32(
         50000, "network-level deadlock threshold"
     )
+    multicast_mac_cycles = Param.UInt32(
+        96, "cycles to multicast signing"
+    )
+    multicast_verify_cycles = Param.UInt32(
+        26, "cycles to multicast verify"
+    )
     enable_multicast = Param.Bool(False, "enable multicast routing")
 
 
@@ -68,6 +74,12 @@ class GarnetNetworkInterface(ClockedObject):
     )
     garnet_deadlock_threshold = Param.UInt32(
         Parent.garnet_deadlock_threshold, "network-level deadlock threshold"
+    )
+    multicast_mac_cycles = Param.UInt32(
+        Parent.multicast_mac_cycles, "network-level deadlock threshold"
+    )
+    multicast_verify_cycles = Param.UInt32(
+        Parent.multicast_verify_cycles, "network-level deadlock threshold"
     )
 
 

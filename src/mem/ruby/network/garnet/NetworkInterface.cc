@@ -58,6 +58,8 @@ NetworkInterface::NetworkInterface(const Params &p)
     m_virtual_networks(p.virt_nets), m_vc_per_vnet(0),
     m_vc_allocator(m_virtual_networks, 0),
     m_deadlock_threshold(p.garnet_deadlock_threshold),
+    m_multicast_mac_cycles(p.multicast_mac_cycles),
+    m_multicast_verify_cycles(p.multicast_verify_cycles),
     vc_busy_counter(m_virtual_networks, 0)
 {
     m_stall_count.resize(m_virtual_networks);
@@ -168,7 +170,7 @@ NetworkInterface::incrementStats(flit *t_flit)
 
     if (t_flit->get_type() == TAIL_ || t_flit->get_type() == HEAD_TAIL_) {
         if(t_flit->is_multiauth()){
-            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(10)));
+            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(m_multicast_verify_cycles)));
         }
         else{
             dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(10)));
@@ -466,7 +468,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             return false ;
         }
 
-        Tick auth_delay = clockEdge(Cycles(80));
+        Tick auth_delay = clockEdge(Cycles(m_multicast_mac_cycles));
         bool is_multi_auth = true;
         // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
         //     net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10, dest_nodes.size()), (float)oPort->bitWidth());

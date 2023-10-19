@@ -280,6 +280,8 @@ class NetworkInterface : public ClockedObject, public Consumer
     std::vector<OutputPort *> outPorts;
     std::vector<InputPort *> inPorts;
     int m_deadlock_threshold;
+    int m_multicast_mac_cycles;
+    int m_multicast_verify_cycles;
     std::vector<OutVcState> outVcState;
 
     std::vector<int> m_stall_count;
