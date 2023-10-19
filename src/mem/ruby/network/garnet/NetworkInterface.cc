@@ -168,7 +168,7 @@ NetworkInterface::incrementStats(flit *t_flit)
 
     if (t_flit->get_type() == TAIL_ || t_flit->get_type() == HEAD_TAIL_) {
         if(t_flit->is_multiauth()){
-            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(26)));
+            dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(10)));
         }
         else{
             dest_queueing_delay = (curTick() - t_flit->get_dequeue_time() + cyclesToTicks(Cycles(10)));
@@ -466,7 +466,7 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
             return false ;
         }
 
-        Tick auth_delay = clockEdge(Cycles(96));
+        Tick auth_delay = clockEdge(Cycles(80));
         bool is_multi_auth = true;
         // int num_flits = (int)divCeil((float) m_net_ptr->MessageSizeType_to_int(
         //     net_msg_ptr->getMessageSize()) + getNumberOfMultiAuthBytes(10, dest_nodes.size()), (float)oPort->bitWidth());
